@@ -29,6 +29,7 @@ unicode-normalization = "0.1.25"
 cached = "0.56.0"
 futures = "0.3"
 i18n-embed = { workspace = true, features = ["fluent-system", "desktop-requester"] }
+xdg = "3.0.0"
 
 [dependencies.libcosmic]
 git = "https://github.com/pop-os/libcosmic.git"

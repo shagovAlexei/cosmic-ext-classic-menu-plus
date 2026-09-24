@@ -119,6 +119,9 @@ pub fn load_app_categories() -> Vec<ApplicationCategory> {
         ApplicationCategory::UTILITY,
     ];
 
+    // Load custom categories
+    ApplicationCategory::get_custom_categories();
+
     // Filter only available ones
     let categories = apps_categories
         .into_iter()
@@ -157,7 +160,7 @@ pub fn get_apps_of_category(category: ApplicationCategory) -> Vec<Arc<Applicatio
     } else {
         load_apps()
             .into_iter()
-            .filter(|app| app.category.iter().any(|c| c == category.mime_name))
+            .filter(|app| app.category.iter().any(|c| *c == category.mime_name))
             .collect()
     }
 }

@@ -170,7 +170,7 @@ impl AppletMenu {
                 cosmic::widget::button::custom(
                     row![
                         container(
-                            cosmic::widget::icon::from_svg_bytes(category.icon_svg_bytes)
+                            cosmic::widget::icon::from_svg_bytes(category.icon_svg_bytes.clone().unwrap())
                                 .symbolic(true)
                                 .icon()
                         )
