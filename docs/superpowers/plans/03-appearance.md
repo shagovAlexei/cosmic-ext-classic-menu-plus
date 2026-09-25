@@ -1,6 +1,6 @@
 # Appearance (popup size, icon size, list density) Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** Let the user set popup width/height, app icon size and list density (Compact/Normal), and move the settings app to a `nav_bar` with pages General / Appearance / Power buttons.
 
@@ -40,7 +40,7 @@
 **Interfaces:**
 - Produces: `appearance::{ListDensity, POPUP_WIDTH_RANGE, POPUP_HEIGHT_RANGE, ICON_SIZE_RANGE, DEFAULT_POPUP_WIDTH, DEFAULT_POPUP_HEIGHT, DEFAULT_ICON_SIZE, clamp_popup_width(u32)->u32, clamp_popup_height(u32)->u32, clamp_icon_size(u16)->u16, item_height(ListDensity, icon_size: u16, space_l: u16, space_xl: u16)->f32, show_comment(ListDensity, space_xl: u16)->bool}`; `AppletConfig.{popup_width: u32, popup_height: u32, app_icon_size: u16, list_density: ListDensity}`.
 
-- [ ] **Step 1: Create the module with tests only (functions stubbed with `todo!()`)**
+- [x] **Step 1: Create the module with tests only (functions stubbed with `todo!()`)**
 
 Create `applet/src/model/appearance.rs`:
 
@@ -144,12 +144,12 @@ mod tests {
 
 Add `pub mod appearance;` to `applet/src/model/mod.rs` (new last line; the file has no trailing newline, so put it on its own line).
 
-- [ ] **Step 2: Run tests to verify they fail**
+- [x] **Step 2: Run tests to verify they fail**
 
 Run: `cargo test -p cosmic-ext-classic-menu-plus-applet --lib appearance 2>&1 | tail -20`
 Expected: 7 tests FAIL with `not yet implemented`.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 Replace the five `todo!()` bodies:
 
@@ -180,12 +180,12 @@ pub fn show_comment(density: ListDensity, space_xl: u16) -> bool {
 }
 ```
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 Run: `cargo test -p cosmic-ext-classic-menu-plus-applet --lib appearance 2>&1 | tail -15`
 Expected: 7 passed.
 
-- [ ] **Step 5: Add config fields**
+- [x] **Step 5: Add config fields**
 
 In `applet/src/config.rs` add to the imports `use crate::model::appearance::{ListDensity, DEFAULT_ICON_SIZE, DEFAULT_POPUP_HEIGHT, DEFAULT_POPUP_WIDTH};`, add to `AppletConfig` after `power_buttons`:
 
@@ -205,12 +205,12 @@ and to `Default` after `power_buttons: ...,`:
             list_density: ListDensity::default(),
 ```
 
-- [ ] **Step 6: Run the whole applet suite and build both crates**
+- [x] **Step 6: Run the whole applet suite and build both crates**
 
 Run: `cargo test -p cosmic-ext-classic-menu-plus-applet --lib 2>&1 | tail -6; cargo build 2>&1 | grep -E "^error|Finished"`
 Expected: all tests pass (17 = 10 old + 7 new), `Finished`.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add applet/src/model/appearance.rs applet/src/model/mod.rs applet/src/config.rs docs/superpowers/plans/03-appearance.md
@@ -232,7 +232,7 @@ Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>"
 
 UI code; there is no unit-test harness for it. Verification is that the existing suite stays green, the build passes, and the manual check in Task 4.
 
-- [ ] **Step 1: Popup size from config**
+- [x] **Step 1: Popup size from config**
 
 In `applet/src/applet_menu.rs` change the constants to the clamp ranges:
 
@@ -257,7 +257,7 @@ and replace the two fixed sizes in `.popup_container(...)`:
 
 Add `use crate::model::appearance;` to the imports. If `POPUP_MAX_HEIGHT` is used elsewhere, `grep -n POPUP_ applet/src` and keep those uses compiling.
 
-- [ ] **Step 2: One item-height method on `Applet`**
+- [x] **Step 2: One item-height method on `Applet`**
 
 In `applet/src/applet.rs`, in an `impl Applet` block (the one holding `select_prev_app`), add:
 
@@ -283,7 +283,7 @@ In both `select_prev_app` and `select_next_app` replace
 
 with `let item_height = self.list_item_height();`.
 
-- [ ] **Step 3: Rendering in `virtualized_app_list.rs`**
+- [x] **Step 3: Rendering in `virtualized_app_list.rs`**
 
 In `view`: remove `space_xl` from the destructured `Spacing`, and replace `let item_height = space_xl as f32;` with `let item_height = applet.list_item_height();`. Change both spacer heights to `Length::Fixed`:
 
@@ -309,12 +309,12 @@ In `create_app_button` add parameter `item_height: f32`, stop destructuring `spa
 
 use `Self::create_icon_widget(app, icon_size)`, and `.height(Length::Fixed(item_height))` instead of `.height(space_xl)`. Add `use crate::model::appearance;`. The `create_icon_widget` signature (`space_l: u16`) already takes a size; leave it, only rename the argument in the call.
 
-- [ ] **Step 4: Build and run the suite**
+- [x] **Step 4: Build and run the suite**
 
 Run: `cargo build 2>&1 | grep -E "^error|Finished" -A8; cargo test -p cosmic-ext-classic-menu-plus-applet --lib 2>&1 | tail -4`
 Expected: `Finished`, 17 passed.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add applet/src
@@ -333,11 +333,11 @@ Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>"
 **Interfaces:**
 - Produces: `enum Page { General, Appearance, PowerButtons }`, `AppModel.nav: nav_bar::Model`, method `appearance_section(&self) -> Section<'_, Message>` (an empty titled section for now; Task 4 fills it).
 
-- [ ] **Step 1: i18n title**
+- [x] **Step 1: i18n title**
 
 Append to `en/...settings.ftl`: `appearance = Appearance`; to `ru/...settings.ftl`: `appearance = Внешний вид`.
 
-- [ ] **Step 2: Model, nav and page enum**
+- [x] **Step 2: Model, nav and page enum**
 
 In `settings/src/app.rs`: import `nav_bar` (`use cosmic::widget::{button, icon, menu, nav_bar, menu::{ItemWidth, ItemHeight}};`), add to `AppModel` the field `nav: nav_bar::Model,`, and above `AppModel` add:
 
@@ -384,7 +384,7 @@ add `nav,` to the struct literal, and inside `impl cosmic::Application for AppMo
 
 If the compiler wants a different `Task` type for `on_nav_select`, use exactly what the trait declares (`cosmic::app::Task<Self::Message>`).
 
-- [ ] **Step 3: Pick the page in `view`**
+- [x] **Step 3: Pick the page in `view`**
 
 In `view`, change `let settings_container = cosmic::widget::settings::view_column(vec![cosmic::widget::settings::section()` to `let general_section = cosmic::widget::settings::section()`, and the tail
 
@@ -418,12 +418,12 @@ Add next to `power_buttons_section`:
     }
 ```
 
-- [ ] **Step 4: Build**
+- [x] **Step 4: Build**
 
 Run: `cargo build -p cosmic-ext-classic-menu-plus-settings 2>&1 | grep -E "^error|Finished" -A10`
 Expected: `Finished`. Fix type errors if any (the `.into()` chain in the `add(...)` block must still compile).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add settings
@@ -443,7 +443,7 @@ Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>"
 - Consumes: Task 1 constants/clamps, Task 3 `appearance_section`.
 - Produces: messages `PopupWidthChanged(u32)`, `PopupHeightChanged(u32)`, `AppIconSizeChanged(u16)`, `ListDensityChanged(usize)`.
 
-- [ ] **Step 1: i18n keys**
+- [x] **Step 1: i18n keys**
 
 `en`:
 ```
@@ -464,7 +464,7 @@ density-compact = Компактная
 density-normal = Обычная
 ```
 
-- [ ] **Step 2: Messages and update arms**
+- [x] **Step 2: Messages and update arms**
 
 Import `cosmic_ext_classic_menu_plus_applet::model::appearance::{self, ListDensity}`. Add to `Message`: `PopupWidthChanged(u32), PopupHeightChanged(u32), AppIconSizeChanged(u16), ListDensityChanged(usize),`. Add arms before `Message::ToggleContextPage`:
 
@@ -507,7 +507,7 @@ and a helper in `impl AppModel`:
     }
 ```
 
-- [ ] **Step 3: The page**
+- [x] **Step 3: The page**
 
 Replace `appearance_section`:
 
@@ -570,12 +570,12 @@ Replace `appearance_section`:
     }
 ```
 
-- [ ] **Step 4: Build both crates in release and run the suite**
+- [x] **Step 4: Build both crates in release and run the suite**
 
 Run: `cargo test -p cosmic-ext-classic-menu-plus-applet --lib 2>&1 | tail -4; just build-release 2>&1 | grep -E "^error|Finished"`
 Expected: 17 passed; two `Finished`.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add settings
@@ -584,7 +584,7 @@ git commit -m "feat(settings): Appearance page with popup size, icon size and de
 Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>"
 ```
 
-- [ ] **Step 6: Manual check (the user runs it; no ticks in PLAN.md before that)**
+- [x] **Step 6: Manual check (the user runs it; no ticks in PLAN.md before that)**
 
 1. `! ./target/release/cosmic-ext-classic-menu-plus-settings`: nav on the left with three pages; each page opens; the window scrolls if needed.
 2. `! sudo just install`, `! killall cosmic-panel`.

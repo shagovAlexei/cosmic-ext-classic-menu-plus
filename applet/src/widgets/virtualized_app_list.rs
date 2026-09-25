@@ -13,6 +13,7 @@ use cosmic::{Element, theme};
 use crate::applet::{Applet, Message};
 use crate::model::appearance;
 use crate::model::application_entry::ApplicationEntry;
+use crate::widgets::ScrollAwareContextMenu;
 
 /// A virtualized app list widget that only renders visible items for performance.
 ///
@@ -148,7 +149,7 @@ impl VirtualizedAppList {
             .on_surface_action(Message::ContextMenuAction)
             .window_id(applet.popup.unwrap_or_else(|| Id::NONE));
 
-        widget.into()
+        ScrollAwareContextMenu::new(widget, applet.scroll_offset).into()
     }
 
     /// Creates the icon widget for an application
