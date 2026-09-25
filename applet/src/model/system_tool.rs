@@ -7,7 +7,7 @@ pub struct SystemTool {
 
 impl SystemTool {
     pub const APPLET_SETTINGS: SystemTool = Self {
-        exec: "cosmic-ext-classic-menu-settings",
+        exec: "cosmic-ext-classic-menu-plus-settings",
     };
     pub const SYSTEM_SETTINGS: SystemTool = Self {
         exec: "cosmic-settings",
@@ -30,7 +30,7 @@ impl SystemTool {
 
     fn handle_applet_settings(&self) {
         let env_vars: Vec<(String, String)> = std::env::vars().collect();
-        let app_id = Some("com.championpeak87.cosmic-ext-classic-menu.settings");
+        let app_id = Some("com.championpeak87.cosmic-ext-classic-menu-plus.settings");
 
         // Spawn the asynchronous execution
         tokio::spawn(async move {

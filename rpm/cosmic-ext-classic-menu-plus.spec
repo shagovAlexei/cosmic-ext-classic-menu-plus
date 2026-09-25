@@ -1,11 +1,11 @@
-Name:           cosmic-ext-classic-menu
+Name:           cosmic-ext-classic-menu-plus
 Version:        0.0.14
 Release:        1%{?dist}
 Summary:        Classic Menu Applet
 
 License:        GPLv3
-URL:            https://github.com/championpeak87/cosmic-ext-classic-menu
-Source0:        https://github.com/championpeak87/cosmic-ext-classic-menu/archive/refs/tags/%{version}.tar.gz
+URL:            https://github.com/shagovAlexei/cosmic-ext-classic-menu-plus
+Source0:        https://github.com/shagovAlexei/cosmic-ext-classic-menu-plus/archive/refs/tags/%{version}.tar.gz
 
 %define debug_package %{nil}
 
@@ -30,10 +30,10 @@ just rootdir=%{buildroot} install
 %files
 %{_bindir}/%{name}-applet
 %{_bindir}/%{name}-settings
-%{_datadir}/applications/com.championpeak87.cosmic-ext-classic-menu.desktop
-%{_datadir}/metainfo/com.championpeak87.cosmic-ext-classic-menu.metainfo.xml
-%{_datadir}/icons/hicolor/scalable/apps/com.championpeak87.cosmic-ext-classic-menu.svg
-%{_datadir}/cosmic/com.championpeak87.cosmic-ext-classic-menu/applet-buttons/*
+%{_datadir}/applications/com.championpeak87.cosmic-ext-classic-menu-plus.desktop
+%{_datadir}/metainfo/com.championpeak87.cosmic-ext-classic-menu-plus.metainfo.xml
+%{_datadir}/icons/hicolor/scalable/apps/com.championpeak87.cosmic-ext-classic-menu-plus.svg
+%{_datadir}/cosmic/com.championpeak87.cosmic-ext-classic-menu-plus/applet-buttons/*
 
 %changelog
 * Mon Jun 12 2026 Kamil Lihan <k.lihan@outlook.com> 0.0.14-1

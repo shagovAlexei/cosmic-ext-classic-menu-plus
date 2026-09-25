@@ -1,16 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <component type="desktop-application">
-  <id>com.championpeak87.cosmic-ext-classic-menu</id>
+  <id>com.championpeak87.cosmic-ext-classic-menu-plus</id>
   <metadata_license>CC0-1.0</metadata_license>
   <project_license>GPL-3.0-only</project_license>
   <project_group>COSMIC</project_group>
   <developer_name>Kamil Lihan</developer_name>
   <update_contact>k.lihan@outlook.com</update_contact>
-  <url type="homepage">https://github.com/championpeak87/cosmic-ext-classic-menu</url>
-  <url type="bugtracker">https://github.com/championpeak87/cosmic-ext-classic-menu/issues</url>
-  <url type="help">https://github.com/championpeak87/cosmic-ext-classic-menu#readme</url>
+  <url type="homepage">https://github.com/shagovAlexei/cosmic-ext-classic-menu-plus</url>
+  <url type="bugtracker">https://github.com/shagovAlexei/cosmic-ext-classic-menu-plus/issues</url>
+  <url type="help">https://github.com/shagovAlexei/cosmic-ext-classic-menu-plus#readme</url>
   <url type="contact">mailto:k.lihan@outlook.com</url>
-  <name>Classic Menu</name>
+  <name>Classic Menu Plus</name>
   <name xml:lang="cs">Klasické menu</name>
   <summary>A launcher applet for the COSMIC™ Desktop</summary>
   <summary xml:lang="cs">Applet spouštěče pro plochu COSMIC™</summary>
@@ -135,20 +135,20 @@
     <p xml:lang="sk">Ideálny pre používateľov, ktorí chcú rýchle spúšťanie aplikácií, prispôsobenie menu alebo prehľad často používaných programov. Perfektný pre COSMIC™ Desktop.</p>
   </description>
   <launchable type="desktop-id">
-    com.championpeak87.cosmic-ext-classic-menu.desktop
+    com.championpeak87.cosmic-ext-classic-menu-plus.desktop
   </launchable>
-  <icon type="stock">com.championpeak87.cosmic-ext-classic-menu.svg</icon>
+  <icon type="stock">com.championpeak87.cosmic-ext-classic-menu-plus.svg</icon>
   <screenshots>
     <screenshot type="default">
       <image>
-        https://raw.githubusercontent.com/championpeak87/cosmic-ext-classic-menu/refs/heads/master/screenshots/cosmic-ext-classic-menu-applet.png
+        https://raw.githubusercontent.com/shagovAlexei/cosmic-ext-classic-menu-plus/refs/heads/master/screenshots/cosmic-ext-classic-menu-applet.png
       </image>
       <caption>Main menu screenshot</caption>
       <caption xml:lang="cs">Hlavní menu</caption>
      </screenshot>
      <screenshot type="default">
       <image>
-        https://raw.githubusercontent.com/championpeak87/cosmic-ext-classic-menu/refs/heads/master/screenshots/cosmic-ext-classic-menu-settings.png
+        https://raw.githubusercontent.com/shagovAlexei/cosmic-ext-classic-menu-plus/refs/heads/master/screenshots/cosmic-ext-classic-menu-settings.png
       </image>
       <caption>Applet settings</caption>
       <caption xml:lang="cs">Nastavení appletu</caption>
@@ -156,8 +156,8 @@
   </screenshots>
   <provides>
     <id>com.system76.CosmicApplet</id>
-    <binary>cosmic-ext-classic-menu-applet</binary>
-    <binary>cosmic-ext-classic-menu-settings</binary>
+    <binary>cosmic-ext-classic-menu-plus-applet</binary>
+    <binary>cosmic-ext-classic-menu-plus-settings</binary>
   </provides>
   <categories>
     <category>Utility</category>

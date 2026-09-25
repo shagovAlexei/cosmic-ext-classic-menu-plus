@@ -1,11 +1,11 @@
 [package]
-name = "cosmic-ext-classic-menu-applet"
+name = "cosmic-ext-classic-menu-plus-applet"
 version = "0.0.14"
 edition = "2024"
 authors = ["Kamil Lihan <k.lihan@outlook.com>"]
 license = "GPL-3.0-only"
 description = "A launcher applet for COSMIC™ Desktop"
-repository = "https://github.com/championpeak87/cosmic-ext-classic-menu"
+repository = "https://github.com/shagovAlexei/cosmic-ext-classic-menu-plus"
 
 [dependencies]
 i18n-embed-fl = { workspace = true }

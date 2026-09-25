@@ -36,7 +36,7 @@ use crate::model::power_action::PowerAction;
 use crate::model::system_tool::SystemTool;
 use crate::model::user::User;
 
-pub const APP_ID: &str = "com.championpeak87.cosmic-ext-classic-menu";
+pub const APP_ID: &str = "com.championpeak87.cosmic-ext-classic-menu-plus";
 
 /// This is the struct that represents your application.
 /// It is used to define the data that will be used by your application.
@@ -777,7 +777,7 @@ impl Applet {
 
     fn handle_zbus_result(&self, result: Result<(), zbus::Error>) -> Task<Message> {
         if let Err(e) = result {
-            log::error!("cosmic-ext-classic-menu ERROR: '{}'", e);
+            log::error!("cosmic-ext-classic-menu-plus ERROR: '{}'", e);
         }
 
         Task::none()

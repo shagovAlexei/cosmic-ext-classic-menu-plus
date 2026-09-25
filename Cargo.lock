@@ -996,7 +996,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "cosmic-ext-classic-menu-applet"
+name = "cosmic-ext-classic-menu-plus-applet"
 version = "0.0.14"
 dependencies = [
  "accounts-zbus",
@@ -1024,10 +1024,10 @@ dependencies = [
 ]
 
 [[package]]
-name = "cosmic-ext-classic-menu-settings"
+name = "cosmic-ext-classic-menu-plus-settings"
 version = "0.0.14"
 dependencies = [
- "cosmic-ext-classic-menu-applet",
+ "cosmic-ext-classic-menu-plus-applet",
  "futures-util",
  "i18n-embed",
  "i18n-embed-fl",

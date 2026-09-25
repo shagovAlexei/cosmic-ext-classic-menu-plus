@@ -8,7 +8,7 @@ use cosmic::iced::{Alignment, Length};
 use cosmic::prelude::*;
 use cosmic::widget::{button, icon, menu, menu::{ItemWidth, ItemHeight}};
 use cosmic::{iced::Background, widget::text, Element};
-use cosmic_ext_classic_menu_applet::config::{
+use cosmic_ext_classic_menu_plus_applet::config::{
     AppletButtonStyle, AppletConfig, HorizontalPosition, UserWidgetStyle,
     VerticalPosition,
 };
@@ -59,7 +59,7 @@ impl cosmic::Application for AppModel {
     type Message = Message;
 
     /// Unique identifier in RDNN (reverse domain name notation) format.
-    const APP_ID: &'static str = cosmic_ext_classic_menu_applet::applet::APP_ID;
+    const APP_ID: &'static str = cosmic_ext_classic_menu_plus_applet::applet::APP_ID;
 
     fn core(&self) -> &cosmic::Core {
         &self.core
@@ -85,11 +85,11 @@ impl cosmic::Application for AppModel {
             .links([
                 (
                     fl!("repository"),
-                    "https://github.com/championpeak87/cosmic-ext-classic-menu",
+                    "https://github.com/shagovAlexei/cosmic-ext-classic-menu-plus",
                 ),
                 (
                     fl!("support"),
-                    "https://github.com/championpeak87/cosmic-ext-classic-menu/issues",
+                    "https://github.com/shagovAlexei/cosmic-ext-classic-menu-plus/issues",
                 ),
             ]);
 
@@ -413,7 +413,7 @@ impl AppModel {
         }
 
         for data_dir in candidate_dirs {
-            let dir = format!("{}/cosmic/{}/applet-buttons", data_dir, cosmic_ext_classic_menu_applet::applet::APP_ID);
+            let dir = format!("{}/cosmic/{}/applet-buttons", data_dir, cosmic_ext_classic_menu_plus_applet::applet::APP_ID);
             if let Ok(entries) = fs::read_dir(&dir) {
                 for entry in entries.flatten() {
                     let path = entry.path();
