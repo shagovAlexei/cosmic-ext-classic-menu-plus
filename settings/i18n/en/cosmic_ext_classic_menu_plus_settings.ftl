@@ -39,3 +39,12 @@ power-reboot = Restart
 power-shutdown = Shut down
 move-up = Move up
 move-down = Move down
+
+appearance = Appearance
+popup-width = Menu width
+popup-height = Menu height
+app-icon-size = App icon size
+list-density = List density
+density-compact = Compact
+density-normal = Normal
+icon-size-auto = Auto

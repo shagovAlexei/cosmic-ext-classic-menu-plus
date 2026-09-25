@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 use crate::fl;
+use crate::model::appearance::{ListDensity, DEFAULT_ICON_SIZE, DEFAULT_POPUP_HEIGHT, DEFAULT_POPUP_WIDTH};
 use crate::model::power_action::PowerAction;
 use cosmic::{
     cosmic_config::{self, cosmic_config_derive::CosmicConfigEntry, Config, CosmicConfigEntry},
@@ -20,6 +21,10 @@ pub struct AppletConfig {
     pub button_icon: String,
     pub recent_applications: Vec<RecentApplication>,
     pub power_buttons: Vec<PowerAction>,
+    pub popup_width: u32,
+    pub popup_height: u32,
+    pub app_icon_size: u16,
+    pub list_density: ListDensity,
 }
 
 impl Default for AppletConfig {
@@ -33,6 +38,10 @@ impl Default for AppletConfig {
             button_icon: format!("/usr/share/cosmic/{}/applet-buttons/default.svg", crate::applet::Applet::APP_ID).to_owned(),
             recent_applications: vec![],
             power_buttons: PowerAction::DEFAULT_ORDER.to_vec(),
+            popup_width: DEFAULT_POPUP_WIDTH,
+            popup_height: DEFAULT_POPUP_HEIGHT,
+            app_icon_size: DEFAULT_ICON_SIZE,
+            list_density: ListDensity::default(),
         }
     }
 }

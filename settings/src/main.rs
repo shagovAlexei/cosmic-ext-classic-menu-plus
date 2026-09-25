@@ -16,7 +16,7 @@ fn main() -> cosmic::iced::Result {
 
     // Settings for configuring the application window and iced runtime.
     let settings = cosmic::app::Settings::default()
-        .size_limits(cosmic::iced::Limits::NONE.height(600.0).width(720.0))
+        .size_limits(cosmic::iced::Limits::NONE.height(600.0).width(900.0))
         .resizable(Some(0.0));
 
     // Starts the application's event loop with `()` as the application's flags.

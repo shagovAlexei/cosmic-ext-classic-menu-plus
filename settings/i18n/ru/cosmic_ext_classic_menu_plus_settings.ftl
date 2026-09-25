@@ -39,3 +39,13 @@ power-reboot = Перезагрузить
 power-shutdown = Выключить
 move-up = Вверх
 move-down = Вниз
+
+appearance = Внешний вид
+popup-width = Ширина меню
+popup-height = Высота меню
+app-icon-size = Размер иконок приложений
+list-density = Плотность списка
+density-compact = Компактная
+density-normal = Обычная
+icon-size-auto = Авто
+default-settings = Сбросить по умолчанию

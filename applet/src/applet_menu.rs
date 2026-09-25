@@ -13,6 +13,7 @@ use cosmic::{Element, theme};
 use crate::applet::{Applet, Message};
 use crate::config::{HorizontalPosition, VerticalPosition};
 use crate::fl;
+use crate::model::appearance;
 use crate::model::power_action::PowerAction;
 use crate::widgets::VirtualizedAppList;
 
@@ -41,10 +42,10 @@ impl menu::Action for ContextMenuAction {
 pub struct AppletMenu;
 
 impl AppletMenu {
-    pub const POPUP_MAX_WIDTH: f32 = 700.0;
+    pub const POPUP_MAX_WIDTH: f32 = 1200.0;
     pub const POPUP_MIN_WIDTH: f32 = 500.0;
-    pub const POPUP_MAX_HEIGHT: f32 = 700.0;
-    pub const POPUP_MIN_HEIGHT: f32 = 300.0;
+    pub const POPUP_MAX_HEIGHT: f32 = 1200.0;
+    pub const POPUP_MIN_HEIGHT: f32 = 400.0;
 
     const SYSTEM_LOCKSCREEN_SYMBOLIC_ICON: &[u8] =
         include_bytes!("../../res/icons/bundled/system-lock-screen-symbolic.svg");
@@ -99,8 +100,12 @@ impl AppletMenu {
             .applet
             .popup_container(
                 menu_layout
-                    .width(Length::Fixed(600.))
-                    .height(Length::Fixed(AppletMenu::POPUP_MAX_HEIGHT)),
+                    .width(Length::Fixed(
+                        appearance::clamp_popup_width(applet.config.popup_width) as f32,
+                    ))
+                    .height(Length::Fixed(
+                        appearance::clamp_popup_height(applet.config.popup_height) as f32,
+                    )),
             )
             .limits(
                 Limits::NONE
