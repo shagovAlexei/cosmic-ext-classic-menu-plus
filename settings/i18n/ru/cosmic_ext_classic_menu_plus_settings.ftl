@@ -49,3 +49,7 @@ density-compact = Компактная
 density-normal = Обычная
 icon-size-auto = Авто
 default-settings = Сбросить по умолчанию
+
+favorites = Избранное
+favorites-empty = Избранных приложений пока нет. Нажмите правой кнопкой на приложение в меню и выберите «В избранное».
+favorite-remove = Убрать

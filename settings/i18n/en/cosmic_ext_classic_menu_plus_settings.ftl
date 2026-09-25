@@ -48,3 +48,7 @@ list-density = List density
 density-compact = Compact
 density-normal = Normal
 icon-size-auto = Auto
+
+favorites = Favorites
+favorites-empty = No favorite apps yet. Right-click an app in the menu and choose "Add to favorites".
+favorite-remove = Remove

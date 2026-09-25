@@ -13,18 +13,22 @@ use cosmic_ext_classic_menu_plus_applet::config::{
     VerticalPosition,
 };
 use cosmic_ext_classic_menu_plus_applet::model::appearance::{self, ListDensity};
+use cosmic_ext_classic_menu_plus_applet::model::application_entry::{ApplicationEntry, IconHandle};
+use cosmic_ext_classic_menu_plus_applet::model::favorites::move_pinned;
 use cosmic_ext_classic_menu_plus_applet::model::power_action::{
     editor_rows, move_power_button, toggle_power_button, MoveDirection, PowerAction,
 };
 use std::collections::HashMap;
 use std::fs;
 use std::path::PathBuf;
+use std::sync::Arc;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 enum Page {
     General,
     Appearance,
     PowerButtons,
+    Favorites,
 }
 
 /// The application model stores app-specific state used to describe its interface and
@@ -42,6 +46,8 @@ pub struct AppModel {
     config: AppletConfig,
     /// Navigation bar with the settings pages.
     nav: nav_bar::Model,
+    /// Installed apps, loaded when the Favorites page is first opened.
+    apps: Vec<Arc<ApplicationEntry>>,
 }
 
 /// Messages emitted by the application and its widgets.
@@ -60,6 +66,8 @@ pub enum Message {
     CustomIconSelected,
     PowerButtonToggled(PowerAction),
     PowerButtonMoved(PowerAction, MoveDirection),
+    FavoriteMoved(String, MoveDirection),
+    FavoriteRemoved(String),
     PopupWidthChanged(u32),
     PopupHeightChanged(u32),
     AppIconSizeChanged(u16),
@@ -95,6 +103,9 @@ impl cosmic::Application for AppModel {
 
     fn on_nav_select(&mut self, id: nav_bar::Id) -> Task<cosmic::Action<Self::Message>> {
         self.nav.activate(id);
+        if self.nav.active_data::<Page>() == Some(&Page::Favorites) && self.apps.is_empty() {
+            self.apps = cosmic_ext_classic_menu_plus_applet::logic::apps::load_apps();
+        }
         Task::none()
     }
 
@@ -136,6 +147,10 @@ impl cosmic::Application for AppModel {
             .text(fl!("power-buttons"))
             .icon(icon::from_name("system-shutdown-symbolic"))
             .data(Page::PowerButtons);
+        nav.insert()
+            .text(fl!("favorites"))
+            .icon(icon::from_name("starred-symbolic"))
+            .data(Page::Favorites);
 
         // Construct the app model with the runtime's core.
         let app = AppModel {
@@ -146,6 +161,7 @@ impl cosmic::Application for AppModel {
             // Optional configuration file for an application.
             config: AppletConfig::config(),
             nav,
+            apps: Vec::new(),
         };
 
         (app, Task::none())
@@ -283,6 +299,7 @@ impl cosmic::Application for AppModel {
             .spacing(cosmic::theme::active().cosmic().space_s())
             .into(),
             Some(Page::PowerButtons) => self.power_buttons_section().into(),
+            Some(Page::Favorites) => self.favorites_section().into(),
             _ => general_section.into(),
         };
         let settings_container = cosmic::widget::settings::view_column(vec![page]);
@@ -422,6 +439,16 @@ impl cosmic::Application for AppModel {
                     .write_entry(AppletConfig::config_handler().as_ref().unwrap())
                     .expect("Failed to write power buttons config");
 
+                Task::none()
+            }
+            Message::FavoriteMoved(id, direction) => {
+                move_pinned(&mut self.config.pinned_apps, &id, direction);
+                self.write_config("pinned apps");
+                Task::none()
+            }
+            Message::FavoriteRemoved(id) => {
+                self.config.pinned_apps.retain(|p| p != &id);
+                self.write_config("pinned apps");
                 Task::none()
             }
             Message::PowerButtonMoved(action, direction) => {
@@ -587,6 +614,50 @@ impl AppModel {
                     Message::ListDensityChanged,
                 ),
             ))
+    }
+
+    fn favorites_section(&self) -> cosmic::widget::settings::Section<'_, Message> {
+        let space_xxs = cosmic::theme::active().cosmic().space_xxs();
+        let pinned = &self.config.pinned_apps;
+        let mut section = cosmic::widget::settings::section().title(fl!("favorites"));
+        if pinned.is_empty() {
+            return section.add(text::body(fl!("favorites-empty")));
+        }
+        for (index, id) in pinned.iter().enumerate() {
+            let app = self.apps.iter().find(|a| &a.id == id);
+            let name = app.map_or_else(|| id.clone(), |a| a.name.clone());
+            let app_icon: Element<'_, Message> = match app.and_then(|a| a.icon.as_ref()) {
+                Some(IconHandle::SvgHandle(h)) => cosmic::widget::svg(h.clone())
+                    .width(Length::Fixed(24.0))
+                    .height(Length::Fixed(24.0))
+                    .into(),
+                Some(IconHandle::RasterHandle(h)) => cosmic::widget::image(h.clone())
+                    .width(Length::Fixed(24.0))
+                    .height(Length::Fixed(24.0))
+                    .into(),
+                None => cosmic::widget::Space::new().width(24).height(24).into(),
+            };
+            let up = cosmic::widget::button::icon(icon::from_name("go-up-symbolic"))
+                .on_press_maybe(
+                    (index > 0).then(|| Message::FavoriteMoved(id.clone(), MoveDirection::Up)),
+                );
+            let down = cosmic::widget::button::icon(icon::from_name("go-down-symbolic"))
+                .on_press_maybe(
+                    (index + 1 < pinned.len())
+                        .then(|| Message::FavoriteMoved(id.clone(), MoveDirection::Down)),
+                );
+            let remove = cosmic::widget::button::standard(fl!("favorite-remove"))
+                .on_press(Message::FavoriteRemoved(id.clone()));
+            let controls = cosmic::iced::widget::row![up, down, remove]
+                .spacing(space_xxs)
+                .align_y(Alignment::Center);
+            section = section.add(cosmic::widget::settings::item_row(vec![
+                app_icon,
+                text::body(name).width(Length::Fill).into(),
+                controls.into(),
+            ]));
+        }
+        section
     }
 
     fn power_buttons_section(&self) -> cosmic::widget::settings::Section<'_, Message> {
