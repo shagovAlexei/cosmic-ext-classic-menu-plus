@@ -54,6 +54,7 @@ pub struct AppModel {
 #[derive(Debug, Clone)]
 pub enum Message {
     UpdateConfig(AppletConfig),
+    ResetSettings,
     LaunchUrl(String),
     AppPositionChanged(HorizontalPosition),
     SearchFieldPositionChanged(VerticalPosition),
@@ -165,6 +166,12 @@ impl cosmic::Application for AppModel {
         };
 
         (app, Task::none())
+    }
+
+    fn subscription(&self) -> cosmic::iced::Subscription<Self::Message> {
+        self.core()
+            .watch_config::<AppletConfig>(Self::APP_ID)
+            .map(|update| Message::UpdateConfig(update.config))
     }
 
     /// Elements to pack at the start of the header bar.
@@ -334,13 +341,20 @@ impl cosmic::Application for AppModel {
     /// on the application's async runtime.
     fn update(&mut self, message: Self::Message) -> Task<cosmic::Action<Self::Message>> {
         match message {
+            // Changes made elsewhere (the applet writes favorites and recent apps).
+            // Never write back here, or we would echo and clobber newer data.
             Message::UpdateConfig(config) => {
                 self.config = config;
-
-                self.config
-                    .write_entry(AppletConfig::config_handler().as_ref().unwrap())
-                    .expect("Failed to write recent applications config");
-
+                Task::none()
+            }
+            Message::ResetSettings => {
+                // Favorites are curated by hand, so a reset keeps them.
+                let pinned_apps = std::mem::take(&mut self.config.pinned_apps);
+                self.config = AppletConfig {
+                    pinned_apps,
+                    ..AppletConfig::default()
+                };
+                self.write_config("default settings");
                 Task::none()
             }
             Message::LaunchUrl(url) => {
@@ -895,7 +909,7 @@ impl menu::action::MenuAction for MenuAction {
         match self {
             MenuAction::About => Message::ToggleContextPage(ContextPage::About),
             MenuAction::SetDefaultSettings => {
-                Message::UpdateConfig(AppletConfig::default())
+                Message::ResetSettings
             }
         }
     }
