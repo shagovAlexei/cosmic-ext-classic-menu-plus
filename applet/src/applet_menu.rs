@@ -56,6 +56,8 @@ impl AppletMenu {
         include_bytes!("../../res/icons/bundled/system-shutdown-symbolic.svg");
     const SYSTEM_SUSPEND_SYMBOLIC_ICON: &[u8] =
         include_bytes!("../../res/icons/bundled/system-suspend-symbolic.svg");
+    const SYSTEM_HIBERNATE_SYMBOLIC_ICON: &[u8] =
+        include_bytes!("../../res/icons/bundled/system-hibernate-symbolic.svg");
     const USER_IDLE_SYMBOLIC: &[u8] =
         include_bytes!("../../res/icons/bundled/user-idle-symbolic.svg");
 
@@ -110,36 +112,60 @@ impl AppletMenu {
             .into()
     }
 
-    fn create_power_menu(_applet: &Applet) -> Element<'_, Message> {
-        container(
-            row![
-                cosmic::widget::button::icon(cosmic::widget::icon::from_svg_bytes(
-                    AppletMenu::SYSTEM_LOGOUT_SYMBOLIC_ICON,
-                ).symbolic(true))
-                .on_press(Message::PowerOptionSelected(PowerAction::Logout)),
-                cosmic::widget::button::icon(cosmic::widget::icon::from_svg_bytes(
-                    AppletMenu::SYSTEM_SUSPEND_SYMBOLIC_ICON,
-                ).symbolic(true))
-                .on_press(Message::PowerOptionSelected(PowerAction::Suspend)),
-                cosmic::widget::button::icon(cosmic::widget::icon::from_svg_bytes(
-                    AppletMenu::SYSTEM_LOCKSCREEN_SYMBOLIC_ICON,
-                ).symbolic(true))
-                .on_press(Message::PowerOptionSelected(PowerAction::Lock)),
-                cosmic::widget::button::icon(cosmic::widget::icon::from_svg_bytes(
-                    AppletMenu::SYSTEM_REBOOT_SYMBOLIC_ICON,
-                ).symbolic(true))
-                .on_press(Message::PowerOptionSelected(PowerAction::Reboot)),
-                cosmic::widget::button::icon(cosmic::widget::icon::from_svg_bytes(
-                    AppletMenu::SYSTEM_SHUTDOWN_SYMBOLIC_ICON,
-                ).symbolic(true))
-                .on_press(Message::PowerOptionSelected(PowerAction::Shutdown)),
+    fn power_action_icon(action: PowerAction) -> &'static [u8] {
+        match action {
+            PowerAction::Logout => AppletMenu::SYSTEM_LOGOUT_SYMBOLIC_ICON,
+            PowerAction::Suspend => AppletMenu::SYSTEM_SUSPEND_SYMBOLIC_ICON,
+            PowerAction::Hibernate => AppletMenu::SYSTEM_HIBERNATE_SYMBOLIC_ICON,
+            PowerAction::Lock => AppletMenu::SYSTEM_LOCKSCREEN_SYMBOLIC_ICON,
+            PowerAction::Reboot => AppletMenu::SYSTEM_REBOOT_SYMBOLIC_ICON,
+            PowerAction::Shutdown => AppletMenu::SYSTEM_SHUTDOWN_SYMBOLIC_ICON,
+        }
+    }
+
+    fn create_power_menu(applet: &Applet) -> Element<'_, Message> {
+        let Spacing { space_xxs, .. } = theme::active().cosmic().spacing;
+
+        let content: Element<Message> = if applet.pending_confirmation.is_some() {
+            column![
+                text(fl!("hibernate-confirm-question")),
+                row![
+                    cosmic::widget::button::standard(fl!("cancel"))
+                        .on_press(Message::CancelPowerAction),
+                    cosmic::widget::button::suggested(fl!("hibernate-confirm-accept"))
+                        .on_press(Message::ConfirmPowerAction),
+                ]
+                .spacing(space_xxs)
+                .align_y(Alignment::Center),
             ]
-            .align_y(Alignment::Center),
-        )
-        .width(Length::Fill)
-        .padding([20, 0])
-        .align_x(Alignment::Center)
-        .into()
+            .spacing(space_xxs)
+            .align_x(Alignment::Center)
+            .into()
+        } else {
+            cosmic::widget::row::with_children(
+                PowerAction::visible(applet.can_hibernate)
+                    .into_iter()
+                    .map(|action| {
+                        cosmic::widget::button::icon(
+                            cosmic::widget::icon::from_svg_bytes(
+                                AppletMenu::power_action_icon(action),
+                            )
+                            .symbolic(true),
+                        )
+                        .on_press(Message::PowerOptionSelected(action))
+                        .into()
+                    })
+                    .collect::<Vec<Element<Message>>>(),
+            )
+            .align_y(Alignment::Center)
+            .into()
+        };
+
+        container(content)
+            .width(Length::Fill)
+            .padding([20, 0])
+            .align_x(Alignment::Center)
+            .into()
     }
 
     fn create_search_field(applet: &Applet) -> Element<'_, Message> {

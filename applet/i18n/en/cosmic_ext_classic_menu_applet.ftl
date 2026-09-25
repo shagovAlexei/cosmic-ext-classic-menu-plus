@@ -28,3 +28,8 @@ menu-label=Menu
 # application context menu
 launch=Launch
 pin-to-panel=Pin to panel
+
+# power actions
+hibernate-confirm-question=Hibernate now?
+hibernate-confirm-accept=Hibernate
+cancel=Cancel
