@@ -47,3 +47,4 @@ app-icon-size = App icon size
 list-density = List density
 density-compact = Compact
 density-normal = Normal
+icon-size-auto = Auto

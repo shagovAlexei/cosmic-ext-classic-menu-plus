@@ -99,8 +99,7 @@ impl VirtualizedAppList {
     /// * `applet` - Reference to the applet
     /// * `index` - The index of the app in the list
     /// * `app` - The application entry
-    /// * `space_l` - Large spacing value for icon size
-    /// * `space_xl` - Extra large spacing value for button height
+    /// * `item_height` - Row height from `Applet::list_item_height`
     ///
     /// # Returns
     /// An element containing a button with context menu
@@ -112,7 +111,7 @@ impl VirtualizedAppList {
     ) -> Element<'a, Message> {
         let space_xl = theme::active().cosmic().spacing.space_xl;
         let show_comment = appearance::show_comment(applet.config.list_density, space_xl);
-        let icon_size = appearance::clamp_icon_size(applet.config.app_icon_size);
+        let icon_size = applet.list_icon_size();
 
         let button = cosmic::widget::button::custom(
             row![
@@ -156,26 +155,26 @@ impl VirtualizedAppList {
     ///
     /// # Arguments
     /// * `app` - The application entry
-    /// * `space_l` - The space value for icon dimensions
+    /// * `icon_size` - The icon dimensions in pixels
     ///
     /// # Returns
     /// A container element with the app icon
-    fn create_icon_widget(app: &Arc<ApplicationEntry>, space_l: u16) -> Element<'_, Message> {
+    fn create_icon_widget(app: &Arc<ApplicationEntry>, icon_size: u16) -> Element<'_, Message> {
         let default_icon = crate::model::application_entry::IconHandle::default();
         let icon_handle = app.icon.as_ref().unwrap_or(&default_icon);
 
         match icon_handle {
             crate::model::application_entry::IconHandle::SvgHandle(handle) => container(
                 cosmic::widget::svg(handle.clone())
-                    .width(Length::Fixed(space_l.into()))
-                    .height(Length::Fixed(space_l.into()))
+                    .width(Length::Fixed(icon_size.into()))
+                    .height(Length::Fixed(icon_size.into()))
                     .content_fit(ContentFit::Contain),
             )
             .into(),
             crate::model::application_entry::IconHandle::RasterHandle(handle) => container(
                 cosmic::widget::image(handle.clone())
-                    .width(Length::Fixed(space_l.into()))
-                    .height(Length::Fixed(space_l.into()))
+                    .width(Length::Fixed(icon_size.into()))
+                    .height(Length::Fixed(icon_size.into()))
                     .content_fit(ContentFit::Contain),
             )
             .into(),

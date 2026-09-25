@@ -436,7 +436,12 @@ impl cosmic::Application for AppModel {
                 Task::none()
             }
             Message::AppIconSizeChanged(value) => {
-                self.config.app_icon_size = appearance::clamp_icon_size(value);
+                // One step below the minimum means "auto" (follow the theme).
+                self.config.app_icon_size = if value < appearance::ICON_SIZE_RANGE.0 {
+                    appearance::DEFAULT_ICON_SIZE
+                } else {
+                    appearance::clamp_icon_size(value)
+                };
                 self.write_config("app icon size");
                 Task::none()
             }
@@ -503,7 +508,18 @@ impl AppModel {
     fn appearance_section(&self) -> cosmic::widget::settings::Section<'_, Message> {
         let width = appearance::clamp_popup_width(self.config.popup_width);
         let height = appearance::clamp_popup_height(self.config.popup_height);
-        let icon_size = appearance::clamp_icon_size(self.config.app_icon_size);
+        let auto_icon = self.config.app_icon_size == appearance::DEFAULT_ICON_SIZE;
+        let auto_step = appearance::ICON_SIZE_RANGE.0 - 2;
+        let icon_size = if auto_icon {
+            auto_step
+        } else {
+            appearance::clamp_icon_size(self.config.app_icon_size)
+        };
+        let icon_label = if auto_icon {
+            fl!("icon-size-auto")
+        } else {
+            icon_size.to_string()
+        };
         let density = match self.config.list_density {
             ListDensity::Compact => 0,
             ListDensity::Normal => 1,
@@ -538,11 +554,11 @@ impl AppModel {
             .add(cosmic::widget::settings::item(
                 fl!("app-icon-size"),
                 cosmic::widget::spin_button(
-                    icon_size.to_string(),
+                    icon_label,
                     fl!("app-icon-size"),
                     icon_size,
                     2,
-                    appearance::ICON_SIZE_RANGE.0,
+                    auto_step,
                     appearance::ICON_SIZE_RANGE.1,
                     Message::AppIconSizeChanged,
                 ),

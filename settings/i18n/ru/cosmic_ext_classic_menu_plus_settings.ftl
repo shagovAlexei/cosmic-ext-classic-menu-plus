@@ -47,3 +47,4 @@ app-icon-size = Размер иконок приложений
 list-density = Плотность списка
 density-compact = Компактная
 density-normal = Обычная
+icon-size-auto = Авто

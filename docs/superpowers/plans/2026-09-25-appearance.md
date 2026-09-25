@@ -15,7 +15,7 @@
 - Merge-friendly with upstream: additive config fields, no reformatting of untouched code (do not run `cargo fmt` over whole files).
 - New config fields must have `Default` values so existing installs keep loading.
 - Ranges: popup width 500–1200, popup height 400–1200, icon size 16–64.
-- Defaults reproduce today's look: width 600, height 700, icon size 24 (= COSMIC default `space_l`), density `Normal`.
+- Defaults reproduce today's look: width 600, height 700, icon size 0 = "auto, follow the theme `space_l`" (changed after final review: `space_l` differs per theme), density `Normal`.
 - Item height is computed in exactly one place (`appearance::item_height`); rendering and scroll math both use it.
 - i18n: every new string in `en` and `ru`.
 - Do not tick boxes in `docs/PLAN.md` (the user ticks after manual verification). Do not push or open a PR; the user decides.

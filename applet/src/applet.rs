@@ -519,12 +519,18 @@ impl Application for Applet {
 }
 
 impl Applet {
+    /// Icon size of the app list (0 in config means "follow the theme").
+    pub fn list_icon_size(&self) -> u16 {
+        let spacing = cosmic::theme::active().cosmic().spacing;
+        crate::model::appearance::resolve_icon_size(self.config.app_icon_size, spacing.space_l)
+    }
+
     /// Row height of the app list; shared by rendering and scroll math.
     pub fn list_item_height(&self) -> f32 {
         let spacing = cosmic::theme::active().cosmic().spacing;
         crate::model::appearance::item_height(
             self.config.list_density,
-            self.config.app_icon_size,
+            self.list_icon_size(),
             spacing.space_l,
             spacing.space_xl,
         )
