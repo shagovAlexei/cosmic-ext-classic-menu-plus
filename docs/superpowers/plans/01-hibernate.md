@@ -1,6 +1,6 @@
 # Hibernate Button Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** Add a "Hibernate" button to the menu's power row. It calls logind `Hibernate` over D-Bus after an in-popup confirmation and is hidden when the system can't hibernate.
 
@@ -60,13 +60,13 @@
   - `pub async fn power_options::hibernate() -> zbus::Result<()>`
   - `pub async fn power_options::can_hibernate() -> bool`
 
-- [ ] **Step 1: Create the branch**
+- [x] **Step 1: Create the branch**
 
 ```bash
 git checkout docs/fork-plan && git checkout -b feat/hibernate
 ```
 
-- [ ] **Step 2: Write the failing tests** at the end of `applet/src/model/power_action.rs`:
+- [x] **Step 2: Write the failing tests** at the end of `applet/src/model/power_action.rs`:
 
 ```rust
 #[cfg(test)]
@@ -120,12 +120,12 @@ mod tests {
 }
 ```
 
-- [ ] **Step 3: Run the tests to verify they fail**
+- [x] **Step 3: Run the tests to verify they fail**
 
 Run: `cargo test -p cosmic-ext-classic-menu-applet --lib power_action`
 Expected: compile errors: no variant `Hibernate`, no function `visible` / `needs_confirmation` / `hibernate_available_from`.
 
-- [ ] **Step 4: Implement.** Replace the body of `applet/src/model/power_action.rs` above the tests with:
+- [x] **Step 4: Implement.** Replace the body of `applet/src/model/power_action.rs` above the tests with:
 
 ```rust
 use crate::applet::Message;
@@ -217,12 +217,12 @@ pub async fn can_hibernate() -> bool {
 }
 ```
 
-- [ ] **Step 5: Run the tests to verify they pass**
+- [x] **Step 5: Run the tests to verify they pass**
 
 Run: `cargo test -p cosmic-ext-classic-menu-applet --lib power_action`
 Expected: 4 tests PASS. `cargo build` may warn that `Hibernate` is not yet handled in `applet.rs::perform_power_action`'s `match` (it has a `_ => ""` arm, so it compiles).
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add applet/src/model/power_action.rs applet/src/power_options.rs
@@ -246,7 +246,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 
 No unit tests: `Applet` needs a live `cosmic::Core`. The decision logic is already covered in Task 1, and this flow is verified manually in Task 3.
 
-- [ ] **Step 1: Add state fields** to `pub struct Applet`, after `scroll_viewport_height`:
+- [x] **Step 1: Add state fields** to `pub struct Applet`, after `scroll_viewport_height`:
 
 ```rust
     /// Whether logind reports hibernation as available.
@@ -262,7 +262,7 @@ In `init`, add to the `Applet { ... }` literal:
             pending_confirmation: None,
 ```
 
-- [ ] **Step 2: Add messages** to `pub enum Message` after `PowerOptionSelected(PowerAction),`:
+- [x] **Step 2: Add messages** to `pub enum Message` after `PowerOptionSelected(PowerAction),`:
 
 ```rust
     HibernateSupport(bool),
@@ -270,7 +270,7 @@ In `init`, add to the `Applet { ... }` literal:
     CancelPowerAction,
 ```
 
-- [ ] **Step 3: Query support at init.** In `init`, before the final tuple, add:
+- [x] **Step 3: Query support at init.** In `init`, before the final tuple, add:
 
 ```rust
         let fetch_can_hibernate_task =
@@ -281,7 +281,7 @@ In `init`, add to the `Applet { ... }` literal:
 
 and add `fetch_can_hibernate_task,` to the `Task::batch(vec![...])`.
 
-- [ ] **Step 4: Handle messages** in `update`, after the `Message::PowerOptionSelected` arm:
+- [x] **Step 4: Handle messages** in `update`, after the `Message::PowerOptionSelected` arm:
 
 ```rust
             Message::HibernateSupport(available) => {
@@ -304,7 +304,7 @@ and add `fetch_can_hibernate_task,` to the `Task::batch(vec![...])`.
             }
 ```
 
-- [ ] **Step 5: Route confirmable actions.** At the top of `perform_power_action`, before `let is_flatpak`:
+- [x] **Step 5: Route confirmable actions.** At the top of `perform_power_action`, before `let is_flatpak`:
 
 ```rust
         if action.needs_confirmation() {
@@ -313,14 +313,14 @@ and add `fetch_can_hibernate_task,` to the `Task::batch(vec![...])`.
         }
 ```
 
-- [ ] **Step 6: Reset on popup open/close.** In `toggle_popup`, after `self.selected_item_index = None;` add `self.pending_confirmation = None;`. In `close_popup`, inside the `if`, add `self.pending_confirmation = None;`.
+- [x] **Step 6: Reset on popup open/close.** In `toggle_popup`, after `self.selected_item_index = None;` add `self.pending_confirmation = None;`. In `close_popup`, inside the `if`, add `self.pending_confirmation = None;`.
 
-- [ ] **Step 7: Build**
+- [x] **Step 7: Build**
 
 Run: `cargo build -p cosmic-ext-classic-menu-applet`
 Expected: builds. If there's a "non-exhaustive patterns" error, check `PowerAction` matches elsewhere (`grep -rn "PowerAction::" applet/src`).
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add applet/src/applet.rs
@@ -342,7 +342,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 **Interfaces:**
 - Consumes: `PowerAction::visible`, `Applet.can_hibernate`, `Applet.pending_confirmation`, `Message::{ConfirmPowerAction, CancelPowerAction, PowerOptionSelected}`
 
-- [ ] **Step 1: Create the icon** `res/icons/bundled/system-hibernate-symbolic.svg` (an original snowflake: three bars with V-branches at each end, same `#232323` fill as the sibling icons so `.symbolic(true)` recolors it):
+- [x] **Step 1: Create the icon** `res/icons/bundled/system-hibernate-symbolic.svg` (an original snowflake: three bars with V-branches at each end, same `#232323` fill as the sibling icons so `.symbolic(true)` recolors it):
 
 ```svg
 <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -361,7 +361,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 </svg>
 ```
 
-- [ ] **Step 2: Add i18n strings.** Append to `applet/i18n/en/cosmic_ext_classic_menu_applet.ftl`:
+- [x] **Step 2: Add i18n strings.** Append to `applet/i18n/en/cosmic_ext_classic_menu_applet.ftl`:
 
 ```
 # power actions
@@ -379,7 +379,7 @@ hibernate-confirm-accept=Гибернация
 cancel=Отмена
 ```
 
-- [ ] **Step 3: Rewrite `create_power_menu`.** In `applet/src/applet_menu.rs`, add after `SYSTEM_SUSPEND_SYMBOLIC_ICON`:
+- [x] **Step 3: Rewrite `create_power_menu`.** In `applet/src/applet_menu.rs`, add after `SYSTEM_SUSPEND_SYMBOLIC_ICON`:
 
 ```rust
     const SYSTEM_HIBERNATE_SYMBOLIC_ICON: &[u8] =
@@ -450,12 +450,12 @@ Replace the whole `fn create_power_menu(_applet: &Applet)` with:
     }
 ```
 
-- [ ] **Step 4: Build and run all tests**
+- [x] **Step 4: Build and run all tests**
 
 Run: `cargo build -p cosmic-ext-classic-menu-applet && cargo test -p cosmic-ext-classic-menu-applet --lib`
 Expected: build OK, 4 tests PASS. If `text(...).align_x` doesn't exist for this libcosmic version, drop the `.align_x` call on the text (the column already centers it).
 
-- [ ] **Step 5: Install and restart the panel**
+- [x] **Step 5: Install and restart the panel**
 
 ```bash
 just build-release && sudo just install && killall cosmic-panel
@@ -463,7 +463,7 @@ just build-release && sudo just install && killall cosmic-panel
 
 The panel respawns automatically; wait ~3 s.
 
-- [ ] **Step 6: Manual verification checklist** (each item must be observed, not assumed):
+- [x] **Step 6: Manual verification checklist** (each item must be observed, not assumed):
   1. The power row shows 6 icons in order: logout, suspend (moon), hibernate (snowflake), lock, reboot, shutdown. No clipping or wrapping in the categories pane.
   2. The snowflake is recolored like the neighbors in both light and dark theme.
   3. Click the snowflake: the row turns into "Перейти в гибернацию?" + [Отмена] [Гибернация]. The text is readable and not cut off.
@@ -472,9 +472,9 @@ The panel respawns automatically; wait ~3 s.
   6. Click the snowflake, then [Гибернация]: the popup closes and the machine hibernates. After resume, the session is intact.
   7. Other buttons are unaffected: lock and suspend act immediately, logout/reboot/shutdown still show the cosmic-osd dialog (press cancel there).
 
-- [ ] **Step 7: Update `docs/PLAN.md`.** Tick every stage 9.1 checkbox that was verified in Step 6, except "Убрать `applet-hibernate` с панели" (the user does that).
+- [x] **Step 7: Update `docs/PLAN.md`.** Tick every stage 9.1 checkbox that was verified in Step 6, except "Убрать `applet-hibernate` с панели" (the user does that).
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add res/icons/bundled/system-hibernate-symbolic.svg applet/src/applet_menu.rs applet/i18n/en/cosmic_ext_classic_menu_applet.ftl applet/i18n/ru/cosmic_ext_classic_menu_applet.ftl docs/PLAN.md

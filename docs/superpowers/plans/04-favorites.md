@@ -1,6 +1,6 @@
 # Favorites Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** A "Favorites" category (first in the list, opened by default when non-empty) filled through a right-click checkbox "Add to favorites", with a settings page to reorder and unpin.
 
@@ -46,13 +46,13 @@
   - `ApplicationCategory::FAVORITES`, config field `AppletConfig::pinned_apps: Vec<String>`
   - i18n keys `favorites` and `add-to-favorites` (applet crate)
 
-- [ ] **Step 1: Copy the icon**
+- [x] **Step 1: Copy the icon**
 
 ```bash
 cp /usr/share/icons/Adwaita/symbolic/status/starred-symbolic.svg res/icons/bundled/starred-symbolic.svg
 ```
 
-- [ ] **Step 2: Write the failing tests** — create `applet/src/model/favorites.rs` with only the tests and the signatures stubbed with `todo!()`:
+- [x] **Step 2: Write the failing tests** — create `applet/src/model/favorites.rs` with only the tests and the signatures stubbed with `todo!()`:
 
 ```rust
 // SPDX-License-Identifier: GPL-3.0-only
@@ -167,12 +167,12 @@ mod tests {
 
 Add `pub mod favorites;` to `applet/src/model/mod.rs`.
 
-- [ ] **Step 3: Run tests to verify they fail**
+- [x] **Step 3: Run tests to verify they fail**
 
 Run: `cargo test -p cosmic-ext-classic-menu-plus-applet favorites 2>&1 | tail -20`
 Expected: 7 tests FAIL with `not yet implemented`.
 
-- [ ] **Step 4: Implement** (replace the three `todo!()` bodies)
+- [x] **Step 4: Implement** (replace the three `todo!()` bodies)
 
 ```rust
 pub fn resolve_favorites(
@@ -218,12 +218,12 @@ pub fn move_pinned(pinned: &mut Vec<String>, app_id: &str, direction: MoveDirect
 }
 ```
 
-- [ ] **Step 5: Run tests to verify they pass**
+- [x] **Step 5: Run tests to verify they pass**
 
 Run: `cargo test -p cosmic-ext-classic-menu-plus-applet favorites 2>&1 | tail -15`
 Expected: 7 passed.
 
-- [ ] **Step 6: Config field, category, strings**
+- [x] **Step 6: Config field, category, strings**
 
 In `applet/src/config.rs` add to the struct (after `list_density`) `pub pinned_apps: Vec<String>,` and to `Default`: `pinned_apps: vec![],`.
 
@@ -242,7 +242,7 @@ and in `get_display_name` add `"favorites" => fl!("favorites"),`.
 
 `applet/i18n/en/...applet.ftl`: `favorites=Favorites` and `add-to-favorites=Add to favorites`. `ru`: `favorites=Избранное` and `add-to-favorites=В избранное`.
 
-- [ ] **Step 7: Full suite and commit**
+- [x] **Step 7: Full suite and commit**
 
 Run: `cargo test -p cosmic-ext-classic-menu-plus-applet 2>&1 | tail -5` and `cargo build -p cosmic-ext-classic-menu-plus-applet 2>&1 | tail -3`
 Expected: 26 passed (19 + 7); build OK.
@@ -269,7 +269,7 @@ git commit -m "feat(favorites): pinned_apps config, FAVORITES category and order
   - `load_app_categories()` and `get_apps_of_category(category)` keep their signatures and read `pinned_apps` from `AppletConfig::config()` (same approach as `get_recent_applications`).
   - `Applet::refresh_favorites_view(&mut self) -> Task<Message>`
 
-- [ ] **Step 1: Write the failing tests** — append to `applet/src/logic/apps.rs`:
+- [x] **Step 1: Write the failing tests** — append to `applet/src/logic/apps.rs`:
 
 ```rust
 #[cfg(test)]
@@ -339,12 +339,12 @@ pub fn category_after_change(
 ) -> Option<ApplicationCategory> { todo!() }
 ```
 
-- [ ] **Step 2: Run tests to verify they fail**
+- [x] **Step 2: Run tests to verify they fail**
 
 Run: `cargo test -p cosmic-ext-classic-menu-plus-applet logic::apps 2>&1 | tail -15`
 Expected: 4 tests FAIL with `not yet implemented`.
 
-- [ ] **Step 3: Implement** — replace the stubs and rewrite `load_app_categories` / `get_apps_of_category`:
+- [x] **Step 3: Implement** — replace the stubs and rewrite `load_app_categories` / `get_apps_of_category`:
 
 ```rust
 pub fn build_categories(
@@ -427,12 +427,12 @@ In `get_apps_of_category` add a branch before the `else`:
 
 Add `favorites::resolve_favorites` to the `use crate::model::...` imports.
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 Run: `cargo test -p cosmic-ext-classic-menu-plus-applet 2>&1 | tail -5`
 Expected: 30 passed (26 + 4).
 
-- [ ] **Step 5: Wire the applet** in `applet/src/applet.rs`:
+- [x] **Step 5: Wire the applet** in `applet/src/applet.rs`:
 
 1. `toggle_popup`: replace
    `self.selected_category = Some(ApplicationCategory::ALL);` and `self.available_applications = load_apps();` with
@@ -477,7 +477,7 @@ Expected: 30 passed (26 + 4).
    Note: read the previous `pinned_apps` first and only refresh when it changed:
    `let changed = self.config.pinned_apps != config.pinned_apps;` before the assignment, and refresh only `if changed && self.popup.is_some()`. This avoids a reload after every launch (recent apps also write the config).
 
-- [ ] **Step 6: Divider position** in `applet/src/applet_menu.rs::create_categories_pane`: replace `categories_pane.insert(2, horizontal_divider);` with
+- [x] **Step 6: Divider position** in `applet/src/applet_menu.rs::create_categories_pane`: replace `categories_pane.insert(2, horizontal_divider);` with
 
 ```rust
         let permanent_count = applet
@@ -491,7 +491,7 @@ Expected: 30 passed (26 + 4).
 ```
 (and remove the old `if !categories_pane.is_empty()` wrapper line it replaces).
 
-- [ ] **Step 7: Build, full suite, commit**
+- [x] **Step 7: Build, full suite, commit**
 
 Run: `cargo build -p cosmic-ext-classic-menu-plus-applet 2>&1 | grep -E "^error" -A8 | head -30; cargo test -p cosmic-ext-classic-menu-plus-applet 2>&1 | tail -4`
 Expected: build OK, 30 passed.
@@ -516,7 +516,7 @@ git commit -m "feat(favorites): Favorites category, default on open, live refres
 
 This task changes UI construction only; the pure logic is covered by Task 1 tests. The verification is a clean build plus the manual check in Task 4.
 
-- [ ] **Step 1: Add the builder** to `impl AppletMenu` in `applet_menu.rs`:
+- [x] **Step 1: Add the builder** to `impl AppletMenu` in `applet_menu.rs`:
 
 ```rust
     /// Right-click menu of an app entry: launch, pin to panel, favorite, then
@@ -566,7 +566,7 @@ This task changes UI construction only; the pure logic is covered by Task 1 test
 
 Add `use crate::model::application_entry::ApplicationEntry;` to the imports. Extend `ContextMenuAction` with `ToggleFavorite(usize)` and its `message()` arm `ContextMenuAction::ToggleFavorite(index) => Message::ToggleFavoriteAt(*index)`.
 
-- [ ] **Step 2: Use it in `applet.rs`** (delete both duplicated builders):
+- [x] **Step 2: Use it in `applet.rs`** (delete both duplicated builders):
 
 In `UpdateAvailableApplications`, the loop body becomes:
 
@@ -620,7 +620,7 @@ Add `ToggleFavoriteAt(usize)` to `Message` and this arm:
 
 (`refresh_favorites_view` reloads the list when Favorites/All is selected; `UpdateAvailableApplications` then rebuilds every menu, including this one. Other categories keep their list and the rebuilt menu above.)
 
-- [ ] **Step 3: Build, full suite, commit**
+- [x] **Step 3: Build, full suite, commit**
 
 Run: `cargo build -p cosmic-ext-classic-menu-plus-applet 2>&1 | grep -E "^(error|warning: unused)" -A8 | head -30; cargo test -p cosmic-ext-classic-menu-plus-applet 2>&1 | tail -4`
 Expected: no errors, no new unused warnings from these files, 30 passed.
@@ -641,9 +641,9 @@ git commit -m "feat(favorites): add-to-favorites checkbox and single context-men
 - Consumes: Task 1 `move_pinned`, `MoveDirection`, `AppletConfig::pinned_apps`; existing `logic::apps::load_apps`, `IconHandle`; existing `write_config` helper and `Page`/nav in `settings/src/app.rs`.
 - Produces: `Page::Favorites`, `Message::FavoriteMoved(String, MoveDirection)`, `Message::FavoriteRemoved(String)`.
 
-- [ ] **Step 1: Strings.** `en` settings ftl: `favorites = Favorites`, `favorites-empty = No favorite apps yet. Right-click an app in the menu and choose "Add to favorites".`, `favorite-remove = Remove`. `ru`: `favorites = Избранное`, `favorites-empty = Избранных приложений пока нет. Нажмите правой кнопкой на приложение в меню и выберите «В избранное».`, `favorite-remove = Убрать`.
+- [x] **Step 1: Strings.** `en` settings ftl: `favorites = Favorites`, `favorites-empty = No favorite apps yet. Right-click an app in the menu and choose "Add to favorites".`, `favorite-remove = Remove`. `ru`: `favorites = Избранное`, `favorites-empty = Избранных приложений пока нет. Нажмите правой кнопкой на приложение в меню и выберите «В избранное».`, `favorite-remove = Убрать`.
 
-- [ ] **Step 2: Page and state.**
+- [x] **Step 2: Page and state.**
   - `enum Page` gets `Favorites`; in `init`, after the power-buttons entry insert `.insert(|e| e.text(fl!("favorites")).icon(icon::from_name("starred-symbolic")).data(Page::Favorites))` (match the exact builder chain used by the other entries).
   - New field `apps: Vec<Arc<ApplicationEntry>>` on the app struct (import `std::sync::Arc` and `cosmic_ext_classic_menu_plus_applet::model::application_entry::{ApplicationEntry, IconHandle}`), initialised empty. It is filled in `on_nav_select` when the selected page is `Favorites` and `self.apps.is_empty()`: `self.apps = cosmic_ext_classic_menu_plus_applet::logic::apps::load_apps();` (cached; synchronous is acceptable, it runs once and only when the page is opened).
   - Messages `FavoriteMoved(String, MoveDirection)` and `FavoriteRemoved(String)`. `update` arms:
@@ -661,7 +661,7 @@ git commit -m "feat(favorites): add-to-favorites checkbox and single context-men
     ```
   - `view` match: `Some(Page::Favorites) => self.favorites_section().into(),`.
 
-- [ ] **Step 3: The page.** Add next to `power_buttons_section`:
+- [x] **Step 3: The page.** Add next to `power_buttons_section`:
 
 ```rust
     fn favorites_section(&self) -> cosmic::widget::settings::Section<'_, Message> {
@@ -709,24 +709,24 @@ git commit -m "feat(favorites): add-to-favorites checkbox and single context-men
 
 Adjust widget paths only if the compiler demands (the crate already uses these builders on the power-buttons page; copy its exact `item_row`/`settings::item` form if `item_row` differs). Import `move_pinned` from `...::model::favorites`.
 
-- [ ] **Step 4: Build and test**
+- [x] **Step 4: Build and test**
 
 Run: `cargo build --release -p cosmic-ext-classic-menu-plus-settings 2>&1 | grep -E "^(error|warning: unused)" -A8 | head -30; cargo test 2>&1 | grep -E "test result|FAILED"`
 Expected: no errors; all suites pass (applet 30).
 
-- [ ] **Step 5: Release build of both crates**
+- [x] **Step 5: Release build of both crates**
 
 Run: `just build-release 2>&1 | tail -3`
 Expected: finishes without errors.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add settings
 git commit -m "feat(settings): Favorites page with reorder and remove"
 ```
 
-- [ ] **Step 7: Manual check list for the user** (do not tick `PLAN.md`; report the list in the final message):
+- [x] **Step 7: Manual check list for the user** (do not tick `PLAN.md`; report the list in the final message):
   1. `! sudo just install`, `! killall cosmic-panel`.
   2. No favorites yet: the menu opens on "All applications"; there is no Favorites category.
   3. Right-click an app: the menu has "Add to favorites" (checked state reflects reality). Tick it: "Favorites" appears first in the categories, with a divider after the three service categories.

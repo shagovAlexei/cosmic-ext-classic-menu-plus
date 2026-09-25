@@ -1,6 +1,6 @@
 # Power Buttons Config Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** Let the user choose which power buttons the menu shows and in what order, from the settings app.
 
@@ -61,13 +61,13 @@
   - `pub fn move_power_button(configured: &mut Vec<PowerAction>, action: PowerAction, dir: MoveDirection)`
   - `AppletConfig.power_buttons: Vec<PowerAction>`
 
-- [ ] **Step 1: Branch**
+- [x] **Step 1: Branch**
 
 ```bash
 git checkout master && git pull origin master && git checkout -b feat/power-buttons-config
 ```
 
-- [ ] **Step 2: Write the failing tests.** In `applet/src/model/power_action.rs` replace the two existing `visible_*` tests with the versions below and add the new ones inside `mod tests`:
+- [x] **Step 2: Write the failing tests.** In `applet/src/model/power_action.rs` replace the two existing `visible_*` tests with the versions below and add the new ones inside `mod tests`:
 
 ```rust
     fn defaults() -> Vec<PowerAction> {
@@ -155,12 +155,12 @@ git checkout master && git pull origin master && git checkout -b feat/power-butt
 
 Also change the existing `only_hibernate_needs_in_popup_confirmation` test: nothing to change there (it iterates `DEFAULT_ORDER`).
 
-- [ ] **Step 3: Run the tests to verify they fail**
+- [x] **Step 3: Run the tests to verify they fail**
 
 Run: `cargo test -p cosmic-ext-classic-menu-plus-applet --lib power_action`
 Expected: compile errors: `visible` takes 1 argument, no `editor_rows` / `toggle_power_button` / `move_power_button` / `MoveDirection`.
 
-- [ ] **Step 4: Implement.** In `applet/src/model/power_action.rs`:
+- [x] **Step 4: Implement.** In `applet/src/model/power_action.rs`:
 
 Add `use serde::{Deserialize, Serialize};` at the top and change the derive on the enum to `#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]`.
 
@@ -252,12 +252,12 @@ In `applet/src/applet_menu.rs`, `create_power_menu`: replace the `PowerAction::v
 
 (keep the rest of the branch unchanged).
 
-- [ ] **Step 5: Run the tests to verify they pass, then build everything**
+- [x] **Step 5: Run the tests to verify they pass, then build everything**
 
 Run: `cargo test -p cosmic-ext-classic-menu-plus-applet --lib && cargo build --workspace`
 Expected: all tests PASS (5 old + new ones), build OK. If `CosmicConfigEntry` complains about `Vec<PowerAction>`, check that the derives on `PowerAction` are in place.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add applet
@@ -280,7 +280,7 @@ Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>"
 
 The settings UI is not unit-testable (needs a running COSMIC app); all its logic is in the tested helpers.
 
-- [ ] **Step 1: i18n strings.** Append to the `en` file:
+- [x] **Step 1: i18n strings.** Append to the `en` file:
 
 ```
 power-buttons = Power buttons
@@ -308,7 +308,7 @@ move-up = Вверх
 move-down = Вниз
 ```
 
-- [ ] **Step 2: Messages and update arms.** In `settings/src/app.rs` extend the imports:
+- [x] **Step 2: Messages and update arms.** In `settings/src/app.rs` extend the imports:
 
 ```rust
 use cosmic_ext_classic_menu_plus_applet::model::power_action::{
@@ -346,7 +346,7 @@ Add to `update`, before `Message::ToggleContextPage`:
             }
 ```
 
-- [ ] **Step 3: The section.** Add to `impl AppModel` (next to `icon_picker`):
+- [x] **Step 3: The section.** Add to `impl AppModel` (next to `icon_picker`):
 
 ```rust
     fn power_action_label(action: PowerAction) -> String {
@@ -399,12 +399,12 @@ In `view`, add the section to the `view_column` vector: change `cosmic::widget::
 
 (If `on_press_maybe` is not available on the icon button builder, use `let up = b; if cond { up.on_press(msg) } else { up }` instead. If `Section` has no public type path, return `Element<'_, Message>` via `.into()`.)
 
-- [ ] **Step 4: Build and run all tests**
+- [x] **Step 4: Build and run all tests**
 
 Run: `cargo build --workspace && cargo test -p cosmic-ext-classic-menu-plus-applet --lib`
 Expected: build OK, all tests PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add settings docs
@@ -413,7 +413,7 @@ git commit -m "feat(settings): power buttons section (show/hide, reorder)
 Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>"
 ```
 
-- [ ] **Step 6: Manual verification (done by the user, needs `sudo just install`).**
+- [x] **Step 6: Manual verification (done by the user, needs `sudo just install`).**
   1. Settings → "Кнопки питания": six rows, all on, arrows enabled except the first row's ↑ and the last row's ↓.
   2. Turn off "Заблокировать экран": the lock icon disappears from the open menu without restarting it.
   3. Move "Гибернация" up: the snowflake moves in the menu.
@@ -423,4 +423,4 @@ Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>"
   7. Delete the file `~/.config/cosmic/io.github.shagovAlexei.cosmic-ext-classic-menu-plus/v1/power_buttons`, reopen the menu: six default buttons.
   8. Hibernate turned on in settings but unsupported by the system: still hidden in the menu (cannot be tested on the user's machine; covered by unit test).
 
-- [ ] **Step 7: Update `docs/PLAN.md`** ticking stage 9.2 boxes once the user confirms Step 6, then commit.
+- [x] **Step 7: Update `docs/PLAN.md`** ticking stage 9.2 boxes once the user confirms Step 6, then commit.
