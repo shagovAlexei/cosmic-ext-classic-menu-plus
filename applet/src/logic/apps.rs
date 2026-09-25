@@ -1,21 +1,19 @@
 use crate::{
     config::{AppletConfig, RecentApplication},
-    model::{
-        application_category::ApplicationCategory, application_entry::ApplicationEntry,
-        favorites::resolve_favorites,
-    },
+    logic::categories,
+    model::{application_category::ApplicationCategory, application_entry::ApplicationEntry},
 };
 use std::{collections::HashMap, string::String, sync::Arc};
 
-use cached::{proc_macro::cached, UnboundCache};
+use cached::{UnboundCache, proc_macro::cached};
 use cosmic_app_list_config::AppListConfig;
 use futures::channel::mpsc::Sender;
-use fuzzy_matcher::{skim::SkimMatcherV2, FuzzyMatcher};
-use unicode_normalization::{char::is_combining_mark, UnicodeNormalization};
+use fuzzy_matcher::{FuzzyMatcher, skim::SkimMatcherV2};
+use unicode_normalization::{UnicodeNormalization, char::is_combining_mark};
 
 use cosmic::{
-    iced::{stream, Subscription},
     iced::futures::{self, SinkExt},
+    iced::{Subscription, stream},
 };
 use notify::{Config, EventKind, RecommendedWatcher, RecursiveMode, Watcher};
 use std::fmt::Debug;
@@ -45,13 +43,11 @@ pub fn load_apps() -> Vec<Arc<ApplicationEntry>> {
 
 /// Strip diacritics (accents) from a string using NFD decomposition
 fn strip_diacritics(s: &str) -> String {
-    s.nfd()
-        .filter(|c| !is_combining_mark(*c))
-        .collect()
+    s.nfd().filter(|c| !is_combining_mark(*c)).collect()
 }
 
-pub fn load_filtered_apps(filter: String) -> Vec<Arc<ApplicationEntry>> {
-    let apps = load_apps();
+pub fn load_filtered_apps(filter: String, config: &AppletConfig) -> Vec<Arc<ApplicationEntry>> {
+    let apps = categories::visible_apps(load_apps(), config);
 
     // If filter is empty, return all apps unsorted
     if filter.is_empty() {
@@ -98,78 +94,15 @@ pub fn load_filtered_apps(filter: String) -> Vec<Arc<ApplicationEntry>> {
     scored.into_iter().map(|(_, app)| app).collect()
 }
 
-pub fn build_categories(
-    used: &std::collections::HashSet<String>,
-    has_favorites: bool,
-) -> Vec<ApplicationCategory> {
-    let mut apps_categories = vec![];
-    if has_favorites {
-        apps_categories.push(ApplicationCategory::FAVORITES);
-    }
-    apps_categories.extend([
-        ApplicationCategory::ALL,
-        ApplicationCategory::RECENTLY_USED,
-        ApplicationCategory::AUDIO,
-        ApplicationCategory::VIDEO,
-        ApplicationCategory::DEVELOPMENT,
-        ApplicationCategory::GAMES,
-        ApplicationCategory::GRAPHICS,
-        ApplicationCategory::NETWORK,
-        ApplicationCategory::OFFICE,
-        ApplicationCategory::SCIENCE,
-        ApplicationCategory::SETTINGS,
-        ApplicationCategory::SYSTEM,
-        ApplicationCategory::UTILITY,
-    ]);
-
-    // Filter only available ones
-    apps_categories
-        .into_iter()
-        .filter(|x| {
-            x.permanent == true
-                || (!x.mime_name.is_empty() && used.contains(&x.mime_name.to_string()))
-        })
-        .collect()
+/// Whether at least one pinned app is installed and not hidden.
+pub fn has_favorites(config: &AppletConfig) -> bool {
+    categories::has_favorites(config, &load_apps())
 }
 
-pub fn default_category(has_favorites: bool) -> ApplicationCategory {
-    if has_favorites {
-        ApplicationCategory::FAVORITES
-    } else {
-        ApplicationCategory::ALL
-    }
-}
-
-pub fn category_after_change(
-    selected: Option<ApplicationCategory>,
-    has_favorites: bool,
-) -> Option<ApplicationCategory> {
-    match selected {
-        Some(c) if c == ApplicationCategory::FAVORITES && !has_favorites => {
-            Some(ApplicationCategory::ALL)
-        }
-        other => other,
-    }
-}
-
-/// Whether at least one pinned app is installed.
-pub fn has_favorites(pinned: &[String]) -> bool {
-    !resolve_favorites(pinned, &load_apps()).is_empty()
-}
-
-pub fn load_app_categories() -> Vec<ApplicationCategory> {
-    use std::collections::HashSet;
-
+pub fn load_app_categories(config: &AppletConfig) -> Vec<ApplicationCategory> {
     log::info!("Loading app categories...");
     let all_apps = load_apps();
-    let used_categories: HashSet<String> = all_apps
-        .iter()
-        .flat_map(|app| app.category.clone())
-        .collect();
-    build_categories(
-        &used_categories,
-        has_favorites(&AppletConfig::config().pinned_apps),
-    )
+    categories::resolve_categories(&all_apps, config, has_favorites(config))
 }
 
 pub fn get_recent_applications() -> Vec<Arc<ApplicationEntry>> {
@@ -189,20 +122,12 @@ pub fn get_recent_applications() -> Vec<Arc<ApplicationEntry>> {
         .collect()
 }
 
-pub fn get_apps_of_category(category: ApplicationCategory) -> Vec<Arc<ApplicationEntry>> {
-    log::info!("Getting apps of category: {}", category.mime_name);
-    if category == ApplicationCategory::ALL {
-        load_apps()
-    } else if category == ApplicationCategory::RECENTLY_USED {
-        get_recent_applications()
-    } else if category == ApplicationCategory::FAVORITES {
-        resolve_favorites(&AppletConfig::config().pinned_apps, &load_apps())
-    } else {
-        load_apps()
-            .into_iter()
-            .filter(|app| app.category.iter().any(|c| c == category.mime_name))
-            .collect()
-    }
+pub fn get_apps_of_category(
+    category: ApplicationCategory,
+    config: &AppletConfig,
+) -> Vec<Arc<ApplicationEntry>> {
+    log::info!("Getting apps of category: {}", category.key);
+    categories::apps_of_category(&category, &load_apps(), &get_recent_applications(), config)
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -211,7 +136,7 @@ pub enum Event {
 }
 
 pub fn desktop_files() -> cosmic::iced::Subscription<Event> {
-    Subscription::run(|| 
+    Subscription::run(|| {
         stream::channel(50, move |mut output: Sender<Event>| async move {
             let handle = tokio::runtime::Handle::current();
             let (tx, mut rx) = mpsc::channel(4);
@@ -249,60 +174,10 @@ pub fn desktop_files() -> cosmic::iced::Subscription<Event> {
             }
 
             futures::future::pending().await
-        }),
-    )
+        })
+    })
 }
 
 pub fn is_app_in_favorites(app: &ApplicationEntry, config: &AppListConfig) -> bool {
     config.favorites.iter().any(|app_id| app.id.eq(app_id))
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    fn used(names: &[&str]) -> std::collections::HashSet<String> {
-        names.iter().map(|s| s.to_string()).collect()
-    }
-
-    fn names(categories: &[ApplicationCategory]) -> Vec<&'static str> {
-        categories.iter().map(|c| c.display_name).collect()
-    }
-
-    #[test]
-    fn favorites_come_first_only_when_there_are_some() {
-        let with = build_categories(&used(&["Audio"]), true);
-        assert_eq!(names(&with), ["favorites", "all-applications", "recently-used", "audio"]);
-        let without = build_categories(&used(&["Audio"]), false);
-        assert_eq!(names(&without), ["all-applications", "recently-used", "audio"]);
-    }
-
-    #[test]
-    fn unused_mime_categories_are_dropped() {
-        let got = build_categories(&used(&[]), false);
-        assert_eq!(names(&got), ["all-applications", "recently-used"]);
-    }
-
-    #[test]
-    fn default_category_follows_favorites() {
-        assert_eq!(default_category(true), ApplicationCategory::FAVORITES);
-        assert_eq!(default_category(false), ApplicationCategory::ALL);
-    }
-
-    #[test]
-    fn selected_favorites_falls_back_to_all_when_empty() {
-        assert_eq!(
-            category_after_change(Some(ApplicationCategory::FAVORITES), false),
-            Some(ApplicationCategory::ALL)
-        );
-        assert_eq!(
-            category_after_change(Some(ApplicationCategory::FAVORITES), true),
-            Some(ApplicationCategory::FAVORITES)
-        );
-        assert_eq!(
-            category_after_change(Some(ApplicationCategory::AUDIO), false),
-            Some(ApplicationCategory::AUDIO)
-        );
-        assert_eq!(category_after_change(None, false), None);
-    }
 }

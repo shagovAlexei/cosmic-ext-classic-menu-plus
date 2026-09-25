@@ -67,6 +67,8 @@ pub struct Applet {
     pub app_list_config: AppListConfig,
     /// Cached context menus for applications (built once when apps are loaded)
     pub context_menus: std::collections::HashMap<String, Vec<cosmic::widget::menu::Tree<Message>>>,
+    /// Categories offered in the per-app "Move to..." submenu.
+    pub move_targets: Vec<ApplicationCategory>,
     /// Scroll offset for virtualization (pixels from top)
     pub scroll_offset: f32,
     /// Viewport height for virtualization and selection scroll behavior.
@@ -109,6 +111,9 @@ pub enum Message {
     LaunchApplicationWithActionAt(usize, usize),
     PinToAppTrayIndex(usize, bool),
     ToggleFavoriteAt(usize),
+    MoveApplicationToCategory(usize, usize),
+    ResetApplicationCategory(usize),
+    HideApplicationAt(usize),
     ScrollUpdated(Viewport),
 }
 
@@ -142,12 +147,14 @@ impl Application for Applet {
     /// - `flags` is used to pass in any data that your application needs to use before it starts.
     /// - `Task` type is used to send messages to your application. `Task::none()` can be used to send no messages to your application.
     fn init(core: Core, _flags: Self::Flags) -> (Self, Task<Self::Message>) {
+        let config = AppletConfig::config();
+        let move_targets = crate::logic::categories::move_targets(&config);
         let window = Applet {
             core,
             search_field: "".to_owned(),
             popup_type: PopupType::MainMenu,
             selected_category: Some(ApplicationCategory::ALL),
-            config: AppletConfig::config(),
+            config,
             current_user: None,
             selected_item_index: None,
             scrollable_id: cosmic::widget::Id::unique(),
@@ -156,6 +163,7 @@ impl Application for Applet {
             available_categories: Vec::new(),
             popup: None,
             context_menus: std::collections::HashMap::new(),
+            move_targets,
             scroll_offset: 0.0,
             scroll_viewport_height: 0.0,
             can_hibernate: false,
@@ -173,8 +181,11 @@ impl Application for Applet {
             |res| cosmic::Action::App(Message::UpdateAvailableApplications(res.unwrap())),
         );
 
+        let categories_config = window.config.clone();
         let fetch_available_categories_task = Task::perform(
-            tokio::task::spawn_blocking(|| crate::logic::apps::load_app_categories()),
+            tokio::task::spawn_blocking(move || {
+                crate::logic::apps::load_app_categories(&categories_config)
+            }),
             |res| cosmic::Action::App(Message::UpdateAvailableCategories(res.unwrap())),
         );
 
@@ -300,28 +311,26 @@ impl Application for Applet {
             Message::FileEvent(event) => self.handle_event(event),
             Message::UpdateConfig(config) => {
                 let pinned_changed = self.config.pinned_apps != config.pinned_apps;
+                let categories_changed = self.config.custom_categories != config.custom_categories
+                    || self.config.app_category_overrides != config.app_category_overrides
+                    || self.config.hidden_apps != config.hidden_apps
+                    || self.config.hidden_categories != config.hidden_categories
+                    || self.config.category_order != config.category_order;
                 self.config = config;
 
-                if pinned_changed && self.popup.is_some() {
-                    self.refresh_favorites_view()
+                if pinned_changed || categories_changed {
+                    self.rebuild_context_menus();
+                }
+
+                if (pinned_changed || categories_changed) && self.popup.is_some() {
+                    self.refresh_menu_view()
                 } else {
                     Task::none()
                 }
             }
             Message::UpdateAvailableApplications(items) => {
                 self.available_applications = items;
-
-                // Build and cache context menus for each application once
-                self.context_menus.clear();
-                for (app_index, app) in self.available_applications.iter().enumerate() {
-                    let trees = crate::applet_menu::AppletMenu::build_app_context_menu(
-                        app,
-                        app_index,
-                        crate::logic::apps::is_app_in_favorites(app, &self.app_list_config),
-                        self.config.pinned_apps.contains(&app.id),
-                    );
-                    self.context_menus.insert(app.id.clone(), trees);
-                }
+                self.rebuild_context_menus();
 
                 Task::none()
             }
@@ -374,14 +383,7 @@ impl Application for Applet {
                             self.app_list_config.add_pinned(pinned_id, &app_list_helper);
                         }
 
-                        // Rebuild the cached menu for this app to reflect the new pin state
-                        let trees = crate::applet_menu::AppletMenu::build_app_context_menu(
-                            &app,
-                            app_index,
-                            !favorites,
-                            self.config.pinned_apps.contains(&app.id),
-                        );
-                        self.context_menus.insert(app.id.clone(), trees);
+                        self.rebuild_app_context_menu(app_index, &app);
                     }
                 }
 
@@ -392,19 +394,42 @@ impl Application for Applet {
                     return Task::none();
                 };
                 crate::model::favorites::toggle_pinned(&mut self.config.pinned_apps, &app.id);
-                if let Some(handler) = AppletConfig::config_handler() {
-                    if let Err(err) = self.config.write_entry(&handler) {
-                        log::error!("failed to save pinned apps: {err}");
-                    }
+                self.save_config();
+                self.rebuild_app_context_menu(app_index, &app);
+                self.refresh_menu_view()
+            }
+            Message::MoveApplicationToCategory(app_index, target_index) => {
+                let Some(app) = self.available_applications.get(app_index).cloned() else {
+                    return Task::none();
+                };
+                let Some(target) = self.move_targets.get(target_index).cloned() else {
+                    return Task::none();
+                };
+                self.config
+                    .app_category_overrides
+                    .insert(app.id.clone(), target.key.into_owned());
+                self.save_config();
+                self.rebuild_app_context_menu(app_index, &app);
+                self.refresh_menu_view()
+            }
+            Message::ResetApplicationCategory(app_index) => {
+                let Some(app) = self.available_applications.get(app_index).cloned() else {
+                    return Task::none();
+                };
+                self.config.app_category_overrides.remove(&app.id);
+                self.save_config();
+                self.rebuild_app_context_menu(app_index, &app);
+                self.refresh_menu_view()
+            }
+            Message::HideApplicationAt(app_index) => {
+                let Some(app) = self.available_applications.get(app_index).cloned() else {
+                    return Task::none();
+                };
+                if !self.config.hidden_apps.contains(&app.id) {
+                    self.config.hidden_apps.push(app.id.clone());
                 }
-                let trees = crate::applet_menu::AppletMenu::build_app_context_menu(
-                    &app,
-                    app_index,
-                    crate::logic::apps::is_app_in_favorites(&app, &self.app_list_config),
-                    self.config.pinned_apps.contains(&app.id),
-                );
-                self.context_menus.insert(app.id.clone(), trees);
-                self.refresh_favorites_view()
+                self.save_config();
+                self.refresh_menu_view()
             }
             Message::AppListConfigUpdated(app_list_config) => {
                 self.app_list_config = app_list_config;
@@ -496,25 +521,30 @@ impl Applet {
     fn toggle_popup(&mut self, popup_type: PopupType) -> Task<Message> {
         // reset popup state
         self.search_field.clear();
-        let category = crate::logic::apps::default_category(crate::logic::apps::has_favorites(
-            &self.config.pinned_apps,
-        ));
+        let category = crate::logic::categories::default_category(
+            crate::logic::apps::has_favorites(&self.config),
+        );
         self.selected_category = Some(category.clone());
-        self.available_applications = crate::logic::apps::get_apps_of_category(category.clone());
+        self.available_applications =
+            crate::logic::apps::get_apps_of_category(category.clone(), &self.config);
         self.selected_item_index = None;
         self.pending_confirmation = None;
 
         let mut tasks = vec![];
         self.popup_type = popup_type;
         if self.popup_type == PopupType::MainMenu {
+            let config = self.config.clone();
             tasks.push(Task::perform(
                 tokio::task::spawn_blocking(move || {
-                    crate::logic::apps::get_apps_of_category(category)
+                    crate::logic::apps::get_apps_of_category(category, &config)
                 }),
                 |res| cosmic::action::app(Message::UpdateAvailableApplications(res.unwrap())),
             ));
+            let config = self.config.clone();
             tasks.push(Task::perform(
-                tokio::task::spawn_blocking(|| crate::logic::apps::load_app_categories()),
+                tokio::task::spawn_blocking(move || {
+                    crate::logic::apps::load_app_categories(&config)
+                }),
                 |res| cosmic::action::app(Message::UpdateAvailableCategories(res.unwrap())),
             ));
         }
@@ -546,28 +576,69 @@ impl Applet {
         }
     }
 
-    /// Reload categories and, if Favorites or All is shown, its list. Called
-    /// after `pinned_apps` changed (context menu or settings).
-    fn refresh_favorites_view(&mut self) -> Task<Message> {
-        let has = crate::logic::apps::has_favorites(&self.config.pinned_apps);
-        self.selected_category =
-            crate::logic::apps::category_after_change(self.selected_category.take(), has);
+    /// Reload categories and, if one is still selected, its app list. Called
+    /// after anything affecting category resolution changed: `pinned_apps`,
+    /// custom categories, overrides, hidden apps/categories or their order.
+    fn refresh_menu_view(&mut self) -> Task<Message> {
+        let has_favorites = crate::logic::apps::has_favorites(&self.config);
+        let available = crate::logic::apps::load_app_categories(&self.config);
+        self.selected_category = crate::logic::categories::category_after_change(
+            self.selected_category.take(),
+            &available,
+            has_favorites,
+        );
+        self.available_categories = available;
         self.selected_item_index = None;
-        let mut tasks = vec![Task::perform(
-            tokio::task::spawn_blocking(|| crate::logic::apps::load_app_categories()),
-            |res| cosmic::action::app(Message::UpdateAvailableCategories(res.unwrap())),
-        )];
+
         if let Some(category) = self.selected_category.clone() {
-            if category == ApplicationCategory::FAVORITES || category == ApplicationCategory::ALL {
-                tasks.push(Task::perform(
-                    tokio::task::spawn_blocking(move || {
-                        crate::logic::apps::get_apps_of_category(category)
-                    }),
-                    |res| cosmic::action::app(Message::UpdateAvailableApplications(res.unwrap())),
-                ));
+            let config = self.config.clone();
+            Task::perform(
+                tokio::task::spawn_blocking(move || {
+                    crate::logic::apps::get_apps_of_category(category, &config)
+                }),
+                |res| cosmic::action::app(Message::UpdateAvailableApplications(res.unwrap())),
+            )
+        } else {
+            Task::none()
+        }
+    }
+
+    /// Persist the config; used by handlers that only touch it (recent
+    /// applications go through `update_recent_applications` instead).
+    fn save_config(&self) {
+        if let Some(handler) = AppletConfig::config_handler() {
+            if let Err(err) = self.config.write_entry(&handler) {
+                log::error!("failed to save config: {err}");
             }
         }
-        Task::batch(tasks)
+    }
+
+    /// Rebuild the cached context menu for every app currently shown; used
+    /// after loading a new app list or after a config change that affects
+    /// every menu (categories, hidden apps/categories, overrides).
+    fn rebuild_context_menus(&mut self) {
+        self.move_targets = crate::logic::categories::move_targets(&self.config);
+        self.context_menus.clear();
+        for (index, app) in self.available_applications.clone().into_iter().enumerate() {
+            self.rebuild_app_context_menu(index, &app);
+        }
+    }
+
+    /// Rebuild the cached context menu for a single app; used after an
+    /// action that only affects that app (pin, favorite, move, hide).
+    fn rebuild_app_context_menu(&mut self, app_index: usize, app: &Arc<ApplicationEntry>) {
+        let pinned_to_panel = crate::logic::apps::is_app_in_favorites(app, &self.app_list_config);
+        let favorite = self.config.pinned_apps.contains(&app.id);
+        let current_target = crate::logic::categories::current_override(&app.id, &self.config)
+            .and_then(|key| self.move_targets.iter().position(|c| c.key.as_ref() == key));
+        let state = crate::applet_menu::AppMenuState {
+            pinned_to_panel,
+            favorite,
+            move_targets: &self.move_targets,
+            current_target,
+        };
+        let trees = crate::applet_menu::AppletMenu::build_app_context_menu(app, app_index, state);
+        self.context_menus.insert(app.id.clone(), trees);
     }
 
     fn close_popup(&mut self, id: Id) -> Task<Message> {
@@ -583,8 +654,11 @@ impl Applet {
         self.selected_category = Some(ApplicationCategory::ALL);
         self.search_field = "".to_string();
 
+        let config = self.config.clone();
         Task::perform(
-            tokio::task::spawn_blocking(|| crate::logic::apps::load_apps()),
+            tokio::task::spawn_blocking(move || {
+                crate::logic::apps::get_apps_of_category(ApplicationCategory::ALL, &config)
+            }),
             |res| cosmic::action::app(Message::UpdateAvailableApplications(res.unwrap())),
         )
     }
@@ -598,6 +672,7 @@ impl Applet {
             return self.clear_search();
         }
 
+        let config = self.config.clone();
         Task::batch([
             // reset scroll position
             cosmic::iced::widget::operation::snap_to(
@@ -605,7 +680,9 @@ impl Applet {
                 RelativeOffset { x: 0., y: 0. },
             ),
             Task::perform(
-                tokio::task::spawn_blocking(move || crate::logic::apps::load_filtered_apps(input)),
+                tokio::task::spawn_blocking(move || {
+                    crate::logic::apps::load_filtered_apps(input, &config)
+                }),
                 |res| cosmic::Action::App(Message::UpdateAvailableApplications(res.unwrap())),
             ),
         ])
@@ -743,6 +820,7 @@ impl Applet {
         self.selected_category = Some(category.clone());
         self.selected_item_index = None;
 
+        let config = self.config.clone();
         Task::batch([
             // reset scroll position
             cosmic::iced::widget::operation::snap_to(
@@ -751,7 +829,7 @@ impl Applet {
             ),
             Task::perform(
                 tokio::task::spawn_blocking(move || {
-                    crate::logic::apps::get_apps_of_category(category)
+                    crate::logic::apps::get_apps_of_category(category, &config)
                 }),
                 |res| cosmic::Action::App(Message::UpdateAvailableApplications(res.unwrap())),
             ),
@@ -841,7 +919,10 @@ impl Applet {
 
             return Task::batch([cosmic::iced::widget::operation::scroll_to(
                 self.scrollable_id.clone(),
-                AbsoluteOffset { x: 0., y: target_offset },
+                AbsoluteOffset {
+                    x: 0.,
+                    y: target_offset,
+                },
             )]);
         }
 
@@ -880,7 +961,10 @@ impl Applet {
 
             return Task::batch([cosmic::iced::widget::operation::scroll_to(
                 self.scrollable_id.clone(),
-                AbsoluteOffset { x: 0., y: target_offset + 16.0 },
+                AbsoluteOffset {
+                    x: 0.,
+                    y: target_offset + 16.0,
+                },
             )]);
         }
 

@@ -13,6 +13,9 @@ fn main() -> cosmic::iced::Result {
 
     // Enable localizations to be applied.
     i18n::init(&requested_languages);
+    // The applet crate's `fl!()` (used by e.g. ApplicationCategory::get_display_name)
+    // has its own localizer and needs to be initialized separately.
+    cosmic_ext_classic_menu_plus_applet::i18n::init(&requested_languages);
 
     // Settings for configuring the application window and iced runtime.
     let settings = cosmic::app::Settings::default()

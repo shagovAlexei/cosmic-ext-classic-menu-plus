@@ -1,22 +1,27 @@
 // SPDX-License-Identifier: {{ license }}
 
+mod categories;
+
 use crate::fl;
 use cosmic::app::context_drawer;
 use cosmic::cosmic_config::CosmicConfigEntry;
 use cosmic::dialog::file_chooser::FileFilter;
 use cosmic::iced::{Alignment, Length};
 use cosmic::prelude::*;
-use cosmic::widget::{button, icon, menu, nav_bar, menu::{ItemWidth, ItemHeight}};
-use cosmic::{iced::Background, widget::text, Element};
+use cosmic::widget::{
+    button, icon, menu,
+    menu::{ItemHeight, ItemWidth},
+    nav_bar,
+};
+use cosmic::{Element, iced::Background, widget::text};
 use cosmic_ext_classic_menu_plus_applet::config::{
-    AppletButtonStyle, AppletConfig, HorizontalPosition, UserWidgetStyle,
-    VerticalPosition,
+    AppletButtonStyle, AppletConfig, HorizontalPosition, UserWidgetStyle, VerticalPosition,
 };
 use cosmic_ext_classic_menu_plus_applet::model::appearance::{self, ListDensity};
 use cosmic_ext_classic_menu_plus_applet::model::application_entry::{ApplicationEntry, IconHandle};
 use cosmic_ext_classic_menu_plus_applet::model::favorites::move_pinned;
 use cosmic_ext_classic_menu_plus_applet::model::power_action::{
-    editor_rows, move_power_button, toggle_power_button, MoveDirection, PowerAction,
+    MoveDirection, PowerAction, editor_rows, move_power_button, toggle_power_button,
 };
 use std::collections::HashMap;
 use std::fs;
@@ -29,6 +34,7 @@ enum Page {
     Appearance,
     PowerButtons,
     Favorites,
+    Categories,
 }
 
 /// The application model stores app-specific state used to describe its interface and
@@ -46,8 +52,10 @@ pub struct AppModel {
     config: AppletConfig,
     /// Navigation bar with the settings pages.
     nav: nav_bar::Model,
-    /// Installed apps, loaded when the Favorites page is first opened.
+    /// Installed apps, loaded when the Favorites or Categories page is first opened.
     apps: Vec<Arc<ApplicationEntry>>,
+    /// Id of the custom category whose icon picker is open.
+    editing_category_icon: Option<String>,
 }
 
 /// Messages emitted by the application and its widgets.
@@ -74,6 +82,15 @@ pub enum Message {
     AppIconSizeChanged(u16),
     ListDensityChanged(usize),
     ResetAppearance,
+    CategoryMoved(String, MoveDirection),
+    CategoryVisibilityToggled(String),
+    CategoryRenamed(String, String),
+    OpenCategoryIconPicker(String),
+    CategoryIconSelected(String, String),
+    CategoryAdded,
+    CategoryRemoved(String),
+    AppUnhidden(String),
+    AppCategoryReset(String),
 }
 
 /// Create a COSMIC application from the app model
@@ -104,7 +121,11 @@ impl cosmic::Application for AppModel {
 
     fn on_nav_select(&mut self, id: nav_bar::Id) -> Task<cosmic::Action<Self::Message>> {
         self.nav.activate(id);
-        if self.nav.active_data::<Page>() == Some(&Page::Favorites) && self.apps.is_empty() {
+        let needs_apps = matches!(
+            self.nav.active_data::<Page>(),
+            Some(&(Page::Favorites | Page::Categories))
+        );
+        if needs_apps && self.apps.is_empty() {
             self.apps = cosmic_ext_classic_menu_plus_applet::logic::apps::load_apps();
         }
         Task::none()
@@ -152,6 +173,10 @@ impl cosmic::Application for AppModel {
             .text(fl!("favorites"))
             .icon(icon::from_name("starred-symbolic"))
             .data(Page::Favorites);
+        nav.insert()
+            .text(fl!("categories"))
+            .icon(icon::from_name("view-list-symbolic"))
+            .data(Page::Categories);
 
         // Construct the app model with the runtime's core.
         let app = AppModel {
@@ -163,6 +188,7 @@ impl cosmic::Application for AppModel {
             config: AppletConfig::config(),
             nav,
             apps: Vec::new(),
+            editing_category_icon: None,
         };
 
         (app, Task::none())
@@ -269,32 +295,31 @@ impl cosmic::Application for AppModel {
         ];
 
         let general_section = cosmic::widget::settings::section()
-                .title(fl!("general"))
-                .add(cosmic::widget::settings::item(
-                    fl!("app-menu-position"),
-                    app_menu_position,
-                ))
-                .add(cosmic::widget::settings::item(
-                    fl!("search-field-position"),
-                    search_field_position,
-                ))
-                .add(cosmic::widget::settings::item(
-                    fl!("applet-button-style"),
-                    applet_button_style,
-                ))
-                .add(cosmic::widget::settings::item(
-                    fl!("user-widget"),
-                    user_widget,
-                ))
-                .add(cosmic::widget::settings::item(
-                    fl!("button-label"),
-                    button_label,
-                ))
-                .add(cosmic::widget::settings::item(
-                    fl!("button-icon"),
-                    button_icon,
-                ))
-                ;
+            .title(fl!("general"))
+            .add(cosmic::widget::settings::item(
+                fl!("app-menu-position"),
+                app_menu_position,
+            ))
+            .add(cosmic::widget::settings::item(
+                fl!("search-field-position"),
+                search_field_position,
+            ))
+            .add(cosmic::widget::settings::item(
+                fl!("applet-button-style"),
+                applet_button_style,
+            ))
+            .add(cosmic::widget::settings::item(
+                fl!("user-widget"),
+                user_widget,
+            ))
+            .add(cosmic::widget::settings::item(
+                fl!("button-label"),
+                button_label,
+            ))
+            .add(cosmic::widget::settings::item(
+                fl!("button-icon"),
+                button_icon,
+            ));
 
         let page: Element<'_, Message> = match self.nav.active_data::<Page>() {
             Some(Page::Appearance) => cosmic::widget::column::with_children(vec![
@@ -307,6 +332,16 @@ impl cosmic::Application for AppModel {
             .into(),
             Some(Page::PowerButtons) => self.power_buttons_section().into(),
             Some(Page::Favorites) => self.favorites_section().into(),
+            Some(Page::Categories) => cosmic::widget::column::with_children(vec![
+                self.categories_section().into(),
+                cosmic::widget::button::standard(fl!("new-category"))
+                    .on_press(Message::CategoryAdded)
+                    .into(),
+                self.hidden_apps_section().into(),
+                self.moved_apps_section().into(),
+            ])
+            .spacing(cosmic::theme::active().cosmic().space_s())
+            .into(),
             _ => general_section.into(),
         };
         let settings_container = cosmic::widget::settings::view_column(vec![page]);
@@ -332,6 +367,11 @@ impl cosmic::Application for AppModel {
                 Message::ToggleContextPage(ContextPage::IconPicker),
             )
             .title(fl!("button-icon")),
+            ContextPage::CategoryIcon => context_drawer::context_drawer(
+                self.category_icon_picker(),
+                Message::ToggleContextPage(ContextPage::CategoryIcon),
+            )
+            .title(fl!("category-icon")),
         })
     }
 
@@ -348,10 +388,21 @@ impl cosmic::Application for AppModel {
                 Task::none()
             }
             Message::ResetSettings => {
-                // Favorites are curated by hand, so a reset keeps them.
+                // Favorites and categories are curated by hand, so a reset keeps them.
                 let pinned_apps = std::mem::take(&mut self.config.pinned_apps);
+                let custom_categories = std::mem::take(&mut self.config.custom_categories);
+                let app_category_overrides =
+                    std::mem::take(&mut self.config.app_category_overrides);
+                let hidden_apps = std::mem::take(&mut self.config.hidden_apps);
+                let hidden_categories = std::mem::take(&mut self.config.hidden_categories);
+                let category_order = std::mem::take(&mut self.config.category_order);
                 self.config = AppletConfig {
                     pinned_apps,
+                    custom_categories,
+                    app_category_overrides,
+                    hidden_apps,
+                    hidden_categories,
+                    category_order,
                     ..AppletConfig::default()
                 };
                 self.write_config("default settings");
@@ -510,6 +561,87 @@ impl cosmic::Application for AppModel {
                 self.write_config("appearance defaults");
                 Task::none()
             }
+            Message::CategoryMoved(key, direction) => {
+                cosmic_ext_classic_menu_plus_applet::logic::categories::move_category(
+                    &mut self.config,
+                    &key,
+                    direction,
+                );
+                self.write_config("category order");
+                Task::none()
+            }
+            Message::CategoryVisibilityToggled(key) => {
+                cosmic_ext_classic_menu_plus_applet::logic::categories::toggle_category_visibility(
+                    &mut self.config,
+                    &key,
+                );
+                self.write_config("category visibility");
+                Task::none()
+            }
+            Message::CategoryRenamed(id, name) => {
+                if let Some(category) = self
+                    .config
+                    .custom_categories
+                    .iter_mut()
+                    .find(|c| c.id == id)
+                {
+                    category.name = name;
+                }
+                self.write_config("category name");
+                Task::none()
+            }
+            Message::OpenCategoryIconPicker(id) => {
+                self.editing_category_icon = Some(id);
+                self.context_page = ContextPage::CategoryIcon;
+                self.core.window.show_context = true;
+                Task::none()
+            }
+            Message::CategoryIconSelected(id, icon_name) => {
+                if let Some(category) = self
+                    .config
+                    .custom_categories
+                    .iter_mut()
+                    .find(|c| c.id == id)
+                {
+                    category.icon = icon_name;
+                }
+                self.core.window.show_context = false;
+                self.editing_category_icon = None;
+                self.write_config("category icon");
+                Task::none()
+            }
+            Message::CategoryAdded => {
+                let id = cosmic_ext_classic_menu_plus_applet::logic::categories::next_custom_id(
+                    &self.config.custom_categories,
+                );
+                self.config.custom_categories.push(
+                    cosmic_ext_classic_menu_plus_applet::model::application_category::CustomCategory {
+                        id,
+                        name: fl!("new-category"),
+                        icon: "folder-symbolic".to_string(),
+                    },
+                );
+                self.write_config("new category");
+                Task::none()
+            }
+            Message::CategoryRemoved(id) => {
+                cosmic_ext_classic_menu_plus_applet::logic::categories::remove_custom_category(
+                    &mut self.config,
+                    &id,
+                );
+                self.write_config("category removed");
+                Task::none()
+            }
+            Message::AppUnhidden(id) => {
+                self.config.hidden_apps.retain(|a| a != &id);
+                self.write_config("unhidden app");
+                Task::none()
+            }
+            Message::AppCategoryReset(id) => {
+                self.config.app_category_overrides.remove(&id);
+                self.write_config("reset app category");
+                Task::none()
+            }
             Message::ToggleContextPage(context_page) => {
                 if self.context_page == context_page {
                     // Close the context drawer if the toggled context page is the same.
@@ -550,6 +682,22 @@ impl AppModel {
             PowerAction::Lock => fl!("power-lock"),
             PowerAction::Reboot => fl!("power-reboot"),
             PowerAction::Shutdown => fl!("power-shutdown"),
+        }
+    }
+
+    /// Icon of an installed app for a settings row; a blank placeholder if
+    /// the app is no longer installed.
+    pub(crate) fn app_row_icon(app: Option<&Arc<ApplicationEntry>>) -> Element<'static, Message> {
+        match app.and_then(|a| a.icon.as_ref()) {
+            Some(IconHandle::SvgHandle(h)) => cosmic::widget::svg(h.clone())
+                .width(Length::Fixed(24.0))
+                .height(Length::Fixed(24.0))
+                .into(),
+            Some(IconHandle::RasterHandle(h)) => cosmic::widget::image(h.clone())
+                .width(Length::Fixed(24.0))
+                .height(Length::Fixed(24.0))
+                .into(),
+            None => cosmic::widget::Space::new().width(24).height(24).into(),
         }
     }
 
@@ -640,17 +788,7 @@ impl AppModel {
         for (index, id) in pinned.iter().enumerate() {
             let app = self.apps.iter().find(|a| &a.id == id);
             let name = app.map_or_else(|| id.clone(), |a| a.name.clone());
-            let app_icon: Element<'_, Message> = match app.and_then(|a| a.icon.as_ref()) {
-                Some(IconHandle::SvgHandle(h)) => cosmic::widget::svg(h.clone())
-                    .width(Length::Fixed(24.0))
-                    .height(Length::Fixed(24.0))
-                    .into(),
-                Some(IconHandle::RasterHandle(h)) => cosmic::widget::image(h.clone())
-                    .width(Length::Fixed(24.0))
-                    .height(Length::Fixed(24.0))
-                    .into(),
-                None => cosmic::widget::Space::new().width(24).height(24).into(),
-            };
+            let app_icon = Self::app_row_icon(app);
             let up = cosmic::widget::button::icon(icon::from_name("go-up-symbolic"))
                 .on_press_maybe(
                     (index > 0).then(|| Message::FavoriteMoved(id.clone(), MoveDirection::Up)),
@@ -732,7 +870,11 @@ impl AppModel {
         }
 
         for data_dir in candidate_dirs {
-            let dir = format!("{}/cosmic/{}/applet-buttons", data_dir, cosmic_ext_classic_menu_plus_applet::applet::APP_ID);
+            let dir = format!(
+                "{}/cosmic/{}/applet-buttons",
+                data_dir,
+                cosmic_ext_classic_menu_plus_applet::applet::APP_ID
+            );
             if let Ok(entries) = fs::read_dir(&dir) {
                 for entry in entries.flatten() {
                     let path = entry.path();
@@ -908,9 +1050,7 @@ impl menu::action::MenuAction for MenuAction {
     fn message(&self) -> Self::Message {
         match self {
             MenuAction::About => Message::ToggleContextPage(ContextPage::About),
-            MenuAction::SetDefaultSettings => {
-                Message::ResetSettings
-            }
+            MenuAction::SetDefaultSettings => Message::ResetSettings,
         }
     }
 }
@@ -921,4 +1061,5 @@ pub enum ContextPage {
     #[default]
     About,
     IconPicker, // 1. Add new variant
+    CategoryIcon,
 }

@@ -53,3 +53,14 @@ default-settings = Сбросить по умолчанию
 favorites = Избранное
 favorites-empty = Избранных приложений пока нет. Нажмите правой кнопкой на приложение в меню и выберите «В избранное».
 favorite-remove = Убрать
+
+categories = Категории
+new-category = Новая категория
+category-name-placeholder = Название категории
+category-icon = Иконка
+hidden-apps = Скрытые приложения
+hidden-apps-empty = Скрытых приложений нет.
+unhide = Вернуть
+moved-apps = Перенесённые приложения
+moved-apps-empty = Ни одно приложение не было перенесено в другую категорию.
+reset-category = Сбросить
