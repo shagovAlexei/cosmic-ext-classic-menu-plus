@@ -519,6 +519,17 @@ impl Application for Applet {
 }
 
 impl Applet {
+    /// Row height of the app list; shared by rendering and scroll math.
+    pub fn list_item_height(&self) -> f32 {
+        let spacing = cosmic::theme::active().cosmic().spacing;
+        crate::model::appearance::item_height(
+            self.config.list_density,
+            self.config.app_icon_size,
+            spacing.space_l,
+            spacing.space_xl,
+        )
+    }
+
     pub fn handle_event(&mut self, event: Event) -> Task<Message> {
         match event {
             Event::Changed => {
@@ -830,8 +841,7 @@ impl Applet {
         }
 
         if let Some(index) = self.selected_item_index {
-            let spacing = cosmic::theme::active().cosmic().spacing;
-            let item_height = spacing.space_xl as f32;
+            let item_height = self.list_item_height();
             let viewport_height = self.scroll_viewport_height.max(item_height);
             let visible_top = self.scroll_offset;
             let visible_bottom = visible_top + viewport_height;
@@ -868,8 +878,7 @@ impl Applet {
         }
 
         if let Some(index) = self.selected_item_index {
-            let spacing = cosmic::theme::active().cosmic().spacing;
-            let item_height = spacing.space_xl as f32;
+            let item_height = self.list_item_height();
             let viewport_height = self.scroll_viewport_height.max(item_height);
             let visible_top = self.scroll_offset;
             let visible_bottom = visible_top + viewport_height;

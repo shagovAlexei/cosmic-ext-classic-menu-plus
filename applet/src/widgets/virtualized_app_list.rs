@@ -11,6 +11,7 @@ use cosmic::widget::{ListColumn, container, scrollable};
 use cosmic::{Element, theme};
 
 use crate::applet::{Applet, Message};
+use crate::model::appearance;
 use crate::model::application_entry::ApplicationEntry;
 
 /// A virtualized app list widget that only renders visible items for performance.
@@ -31,14 +32,9 @@ impl VirtualizedAppList {
     /// # Returns
     /// A scrollable element containing only the visible app items
     pub fn view(applet: &Applet) -> Element<'_, Message> {
-        let Spacing {
-            space_s,
-            space_xl,
-            ..
-        } = theme::active().cosmic().spacing;
+        let Spacing { space_s, .. } = theme::active().cosmic().spacing;
 
-        // Use actual button height from theme spacing
-        let item_height = space_xl as f32;
+        let item_height = applet.list_item_height();
         let scroll_offset = applet.scroll_offset;
         let total_items = applet.available_applications.len();
 
@@ -56,8 +52,8 @@ impl VirtualizedAppList {
 
         // Add spacer above visible items to maintain scroll position
         if render_start > 0 {
-            let spacer_height = (render_start as f32 * item_height) as u16;
-            items.push(cosmic::widget::Space::new().width(Length::Fill).height(spacer_height).into());
+            let spacer_height = render_start as f32 * item_height;
+            items.push(cosmic::widget::Space::new().width(Length::Fill).height(Length::Fixed(spacer_height)).into());
         }
 
         // Add visible and buffered items
@@ -71,14 +67,15 @@ impl VirtualizedAppList {
             items.push(Self::create_app_button(
                 applet,
                 original_index,
-                app
+                app,
+                item_height,
             ));
         }
 
         // Add spacer below visible items
         if render_end < total_items {
-            let remaining_height = ((total_items - render_end) as f32 * item_height) as u16;
-            items.push(cosmic::widget::Space::new().width(Length::Fill).height(remaining_height).into());
+            let remaining_height = (total_items - render_end) as f32 * item_height;
+            items.push(cosmic::widget::Space::new().width(Length::Fill).height(Length::Fixed(remaining_height)).into());
         }
 
         // Build list column from items
@@ -110,20 +107,16 @@ impl VirtualizedAppList {
     fn create_app_button<'a>(
         applet: &'a Applet,
         index: usize,
-        app: &'a Arc<ApplicationEntry>
+        app: &'a Arc<ApplicationEntry>,
+        item_height: f32,
     ) -> Element<'a, Message> {
-        let Spacing {
-            space_l,
-            space_xl,
-            ..
-        } = theme::active().cosmic().spacing;
-
-        // Show comment only if item height is sufficient (at least 60 pixels)
-        let show_comment = space_xl >= 40;
+        let space_xl = theme::active().cosmic().spacing.space_xl;
+        let show_comment = appearance::show_comment(applet.config.list_density, space_xl);
+        let icon_size = appearance::clamp_icon_size(applet.config.app_icon_size);
 
         let button = cosmic::widget::button::custom(
             row![
-                Self::create_icon_widget(app, space_l),
+                Self::create_icon_widget(app, icon_size),
                 cosmic::widget::Space::new().width(5).height(Length::Fill),
                 if show_comment {
                     column![
@@ -147,7 +140,7 @@ impl VirtualizedAppList {
             },
         )
         .width(Length::Fill)
-        .height(space_xl);
+        .height(Length::Fixed(item_height));
 
         let context_menu = Self::create_context_menu(applet, app);
 
