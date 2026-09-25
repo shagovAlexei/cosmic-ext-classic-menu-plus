@@ -8,7 +8,7 @@
 
 **Tech Stack:** Rust, libcosmic (`nav_bar`, `button::icon`), cosmic-config, Fluent (`fl!`).
 
-**Spec:** `docs/PLAN.md`, section "4. Избранное" and stage 4 TODO.
+**Spec:** `docs/PLAN.md`, section "7. Избранное" and stage 9.4 TODO.
 
 ## Global Constraints
 

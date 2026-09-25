@@ -8,12 +8,12 @@
 
 **Tech Stack:** Rust 2024, libcosmic (iced), `logind-zbus` 5.3.2 (`ManagerProxy::hibernate(bool)`, `ManagerProxy::can_hibernate() -> IsSupported`), Fluent i18n via `fl!`.
 
-**Spec:** `docs/PLAN.md` section "1. Гибернация" and "Этап 1" TODO list.
+**Spec:** `docs/PLAN.md` section "4. Гибернация" and "9.1" TODO list.
 
 ## Global Constraints
 
 - `APP_ID` stays `com.championpeak87.cosmic-ext-classic-menu`; do not rename anything upstream-owned.
-- No `AppletConfig` changes in this stage (config-driven button list is Stage 2).
+- No `AppletConfig` changes in this stage (config-driven button list is stage 9.2).
 - Hibernate goes through logind D-Bus directly (no `cosmic-osd`, no `flatpak-spawn`), like Suspend/Lock.
 - Available iff `CanHibernate` is `yes` or `challenge`; `na`, `no` or a D-Bus error → hidden.
 - Default button order: Logout, Suspend, Hibernate, Lock, Reboot, Shutdown.
@@ -39,7 +39,7 @@
 - Modify `applet/src/applet_menu.rs`: data-driven icon row, hibernate icon constant, confirmation row.
 - Create `res/icons/bundled/system-hibernate-symbolic.svg`: an original 16×16 snowflake glyph matching the style of the other bundled icons.
 - Modify `applet/i18n/en/cosmic_ext_classic_menu_applet.ftl` and `applet/i18n/ru/cosmic_ext_classic_menu_applet.ftl`.
-- Modify `docs/PLAN.md`: tick Stage 1 boxes.
+- Modify `docs/PLAN.md`: tick stage 9.1 boxes.
 
 ---
 
@@ -472,7 +472,7 @@ The panel respawns automatically; wait ~3 s.
   6. Click the snowflake, then [Гибернация]: the popup closes and the machine hibernates. After resume, the session is intact.
   7. Other buttons are unaffected: lock and suspend act immediately, logout/reboot/shutdown still show the cosmic-osd dialog (press cancel there).
 
-- [ ] **Step 7: Update `docs/PLAN.md`.** Tick every Stage 1 checkbox that was verified in Step 6, except "Убрать `applet-hibernate` с панели" (the user does that).
+- [ ] **Step 7: Update `docs/PLAN.md`.** Tick every stage 9.1 checkbox that was verified in Step 6, except "Убрать `applet-hibernate` с панели" (the user does that).
 
 - [ ] **Step 8: Commit**
 
