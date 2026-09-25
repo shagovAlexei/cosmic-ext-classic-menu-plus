@@ -48,3 +48,4 @@ list-density = Плотность списка
 density-compact = Компактная
 density-normal = Обычная
 icon-size-auto = Авто
+default-settings = Сбросить по умолчанию

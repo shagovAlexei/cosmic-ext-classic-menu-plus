@@ -64,6 +64,7 @@ pub enum Message {
     PopupHeightChanged(u32),
     AppIconSizeChanged(u16),
     ListDensityChanged(usize),
+    ResetAppearance,
 }
 
 /// Create a COSMIC application from the app model
@@ -273,7 +274,14 @@ impl cosmic::Application for AppModel {
                 ;
 
         let page: Element<'_, Message> = match self.nav.active_data::<Page>() {
-            Some(Page::Appearance) => self.appearance_section().into(),
+            Some(Page::Appearance) => cosmic::widget::column::with_children(vec![
+                self.appearance_section().into(),
+                cosmic::widget::button::standard(fl!("default-settings"))
+                    .on_press(Message::ResetAppearance)
+                    .into(),
+            ])
+            .spacing(cosmic::theme::active().cosmic().space_s())
+            .into(),
             Some(Page::PowerButtons) => self.power_buttons_section().into(),
             _ => general_section.into(),
         };
@@ -451,6 +459,14 @@ impl cosmic::Application for AppModel {
                     _ => ListDensity::Normal,
                 };
                 self.write_config("list density");
+                Task::none()
+            }
+            Message::ResetAppearance => {
+                self.config.popup_width = appearance::DEFAULT_POPUP_WIDTH;
+                self.config.popup_height = appearance::DEFAULT_POPUP_HEIGHT;
+                self.config.app_icon_size = appearance::DEFAULT_ICON_SIZE;
+                self.config.list_density = ListDensity::default();
+                self.write_config("appearance defaults");
                 Task::none()
             }
             Message::ToggleContextPage(context_page) => {
