@@ -1,6 +1,9 @@
 use crate::{
     config::{AppletConfig, RecentApplication},
-    model::{application_category::ApplicationCategory, application_entry::ApplicationEntry},
+    model::{
+        application_category::ApplicationCategory, application_entry::ApplicationEntry,
+        favorites::resolve_favorites,
+    },
 };
 use std::{collections::HashMap, string::String, sync::Arc};
 
@@ -95,15 +98,15 @@ pub fn load_filtered_apps(filter: String) -> Vec<Arc<ApplicationEntry>> {
     scored.into_iter().map(|(_, app)| app).collect()
 }
 
-pub fn load_app_categories() -> Vec<ApplicationCategory> {
-    use std::collections::HashSet;
-
-    log::info!("Loading app categories...");
-    let all_apps = load_apps();
-    let used_categories: HashSet<&String> = all_apps.iter().flat_map(|app| &app.category).collect();
-
-    // Define all app categories
-    let apps_categories = [
+pub fn build_categories(
+    used: &std::collections::HashSet<String>,
+    has_favorites: bool,
+) -> Vec<ApplicationCategory> {
+    let mut apps_categories = vec![];
+    if has_favorites {
+        apps_categories.push(ApplicationCategory::FAVORITES);
+    }
+    apps_categories.extend([
         ApplicationCategory::ALL,
         ApplicationCategory::RECENTLY_USED,
         ApplicationCategory::AUDIO,
@@ -117,18 +120,56 @@ pub fn load_app_categories() -> Vec<ApplicationCategory> {
         ApplicationCategory::SETTINGS,
         ApplicationCategory::SYSTEM,
         ApplicationCategory::UTILITY,
-    ];
+    ]);
 
     // Filter only available ones
-    let categories = apps_categories
+    apps_categories
         .into_iter()
         .filter(|x| {
             x.permanent == true
-                || (!x.mime_name.is_empty() && used_categories.contains(&x.mime_name.to_string()))
+                || (!x.mime_name.is_empty() && used.contains(&x.mime_name.to_string()))
         })
-        .collect();
+        .collect()
+}
 
-    categories
+pub fn default_category(has_favorites: bool) -> ApplicationCategory {
+    if has_favorites {
+        ApplicationCategory::FAVORITES
+    } else {
+        ApplicationCategory::ALL
+    }
+}
+
+pub fn category_after_change(
+    selected: Option<ApplicationCategory>,
+    has_favorites: bool,
+) -> Option<ApplicationCategory> {
+    match selected {
+        Some(c) if c == ApplicationCategory::FAVORITES && !has_favorites => {
+            Some(ApplicationCategory::ALL)
+        }
+        other => other,
+    }
+}
+
+/// Whether at least one pinned app is installed.
+pub fn has_favorites(pinned: &[String]) -> bool {
+    !resolve_favorites(pinned, &load_apps()).is_empty()
+}
+
+pub fn load_app_categories() -> Vec<ApplicationCategory> {
+    use std::collections::HashSet;
+
+    log::info!("Loading app categories...");
+    let all_apps = load_apps();
+    let used_categories: HashSet<String> = all_apps
+        .iter()
+        .flat_map(|app| app.category.clone())
+        .collect();
+    build_categories(
+        &used_categories,
+        has_favorites(&AppletConfig::config().pinned_apps),
+    )
 }
 
 pub fn get_recent_applications() -> Vec<Arc<ApplicationEntry>> {
@@ -154,6 +195,8 @@ pub fn get_apps_of_category(category: ApplicationCategory) -> Vec<Arc<Applicatio
         load_apps()
     } else if category == ApplicationCategory::RECENTLY_USED {
         get_recent_applications()
+    } else if category == ApplicationCategory::FAVORITES {
+        resolve_favorites(&AppletConfig::config().pinned_apps, &load_apps())
     } else {
         load_apps()
             .into_iter()
@@ -212,4 +255,54 @@ pub fn desktop_files() -> cosmic::iced::Subscription<Event> {
 
 pub fn is_app_in_favorites(app: &ApplicationEntry, config: &AppListConfig) -> bool {
     config.favorites.iter().any(|app_id| app.id.eq(app_id))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn used(names: &[&str]) -> std::collections::HashSet<String> {
+        names.iter().map(|s| s.to_string()).collect()
+    }
+
+    fn names(categories: &[ApplicationCategory]) -> Vec<&'static str> {
+        categories.iter().map(|c| c.display_name).collect()
+    }
+
+    #[test]
+    fn favorites_come_first_only_when_there_are_some() {
+        let with = build_categories(&used(&["Audio"]), true);
+        assert_eq!(names(&with), ["favorites", "all-applications", "recently-used", "audio"]);
+        let without = build_categories(&used(&["Audio"]), false);
+        assert_eq!(names(&without), ["all-applications", "recently-used", "audio"]);
+    }
+
+    #[test]
+    fn unused_mime_categories_are_dropped() {
+        let got = build_categories(&used(&[]), false);
+        assert_eq!(names(&got), ["all-applications", "recently-used"]);
+    }
+
+    #[test]
+    fn default_category_follows_favorites() {
+        assert_eq!(default_category(true), ApplicationCategory::FAVORITES);
+        assert_eq!(default_category(false), ApplicationCategory::ALL);
+    }
+
+    #[test]
+    fn selected_favorites_falls_back_to_all_when_empty() {
+        assert_eq!(
+            category_after_change(Some(ApplicationCategory::FAVORITES), false),
+            Some(ApplicationCategory::ALL)
+        );
+        assert_eq!(
+            category_after_change(Some(ApplicationCategory::FAVORITES), true),
+            Some(ApplicationCategory::FAVORITES)
+        );
+        assert_eq!(
+            category_after_change(Some(ApplicationCategory::AUDIO), false),
+            Some(ApplicationCategory::AUDIO)
+        );
+        assert_eq!(category_after_change(None, false), None);
+    }
 }

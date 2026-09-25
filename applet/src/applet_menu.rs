@@ -233,8 +233,13 @@ impl AppletMenu {
                 .align_y(Alignment::Center)
                 .padding(5)
                 .into();
+        let permanent_count = applet
+            .available_categories
+            .iter()
+            .filter(|c| c.permanent)
+            .count();
         if !categories_pane.is_empty() {
-            categories_pane.insert(2, horizontal_divider);
+            categories_pane.insert(permanent_count, horizontal_divider);
         }
 
         // add power menu to the bottom of the categories pane

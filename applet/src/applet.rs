@@ -298,9 +298,14 @@ impl Application for Applet {
             }
             Message::FileEvent(event) => self.handle_event(event),
             Message::UpdateConfig(config) => {
+                let pinned_changed = self.config.pinned_apps != config.pinned_apps;
                 self.config = config;
 
-                Task::none()
+                if pinned_changed && self.popup.is_some() {
+                    self.refresh_favorites_view()
+                } else {
+                    Task::none()
+                }
             }
             Message::UpdateAvailableApplications(items) => {
                 self.available_applications = items;
@@ -551,8 +556,11 @@ impl Applet {
     fn toggle_popup(&mut self, popup_type: PopupType) -> Task<Message> {
         // reset popup state
         self.search_field.clear();
-        self.selected_category = Some(ApplicationCategory::ALL);
-        self.available_applications = load_apps();
+        let category = crate::logic::apps::default_category(crate::logic::apps::has_favorites(
+            &self.config.pinned_apps,
+        ));
+        self.selected_category = Some(category.clone());
+        self.available_applications = crate::logic::apps::get_apps_of_category(category.clone());
         self.selected_item_index = None;
         self.pending_confirmation = None;
 
@@ -560,7 +568,9 @@ impl Applet {
         self.popup_type = popup_type;
         if self.popup_type == PopupType::MainMenu {
             tasks.push(Task::perform(
-                tokio::task::spawn_blocking(|| crate::logic::apps::load_apps()),
+                tokio::task::spawn_blocking(move || {
+                    crate::logic::apps::get_apps_of_category(category)
+                }),
                 |res| cosmic::action::app(Message::UpdateAvailableApplications(res.unwrap())),
             ));
             tasks.push(Task::perform(
@@ -594,6 +604,30 @@ impl Applet {
             tasks.push(get_popup(popup_settings));
             Task::batch(tasks)
         }
+    }
+
+    /// Reload categories and, if Favorites or All is shown, its list. Called
+    /// after `pinned_apps` changed (context menu or settings).
+    fn refresh_favorites_view(&mut self) -> Task<Message> {
+        let has = crate::logic::apps::has_favorites(&self.config.pinned_apps);
+        self.selected_category =
+            crate::logic::apps::category_after_change(self.selected_category.take(), has);
+        self.selected_item_index = None;
+        let mut tasks = vec![Task::perform(
+            tokio::task::spawn_blocking(|| crate::logic::apps::load_app_categories()),
+            |res| cosmic::action::app(Message::UpdateAvailableCategories(res.unwrap())),
+        )];
+        if let Some(category) = self.selected_category.clone() {
+            if category == ApplicationCategory::FAVORITES || category == ApplicationCategory::ALL {
+                tasks.push(Task::perform(
+                    tokio::task::spawn_blocking(move || {
+                        crate::logic::apps::get_apps_of_category(category)
+                    }),
+                    |res| cosmic::action::app(Message::UpdateAvailableApplications(res.unwrap())),
+                ));
+            }
+        }
+        Task::batch(tasks)
     }
 
     fn close_popup(&mut self, id: Id) -> Task<Message> {
