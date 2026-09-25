@@ -58,6 +58,14 @@ impl PowerAction {
     }
 }
 
+/// Clicks on the confirm button are ignored for this long after it appears, so a
+/// double-click on the power icon cannot confirm by accident.
+pub const CONFIRM_GUARD: std::time::Duration = std::time::Duration::from_millis(400);
+
+pub fn confirmation_ready(shown: std::time::Instant, now: std::time::Instant) -> bool {
+    now.saturating_duration_since(shown) >= CONFIRM_GUARD
+}
+
 /// Interpret logind's `CanHibernate` answer; errors mean "not available".
 pub fn hibernate_available_from(res: zbus::Result<IsSupported>) -> bool {
     matches!(res, Ok(IsSupported::Yes | IsSupported::Challenge))
@@ -100,6 +108,14 @@ mod tests {
                 "{action:?}"
             );
         }
+    }
+
+    #[test]
+    fn confirmation_ignores_clicks_right_after_it_appears() {
+        let shown = std::time::Instant::now();
+        assert!(!confirmation_ready(shown, shown));
+        assert!(!confirmation_ready(shown, shown + CONFIRM_GUARD / 2));
+        assert!(confirmation_ready(shown, shown + CONFIRM_GUARD));
     }
 
     #[test]

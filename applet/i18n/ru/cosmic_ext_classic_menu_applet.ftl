@@ -33,5 +33,5 @@ pin-to-panel=Закрепить на панели
 
 # действия питания
 hibernate-confirm-question=Перейти в гибернацию?
-hibernate-confirm-accept=Гибернация
+confirm-yes=Да
 cancel=Отмена

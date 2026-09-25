@@ -74,7 +74,7 @@ pub struct Applet {
     /// Whether logind reports hibernation as available.
     pub can_hibernate: bool,
     /// Power action waiting for in-popup confirmation.
-    pub pending_confirmation: Option<PowerAction>,
+    pub pending_confirmation: Option<(PowerAction, std::time::Instant)>,
 }
 
 /// This is the enum that contains all the possible variants that your application will need to transmit messages.
@@ -265,8 +265,17 @@ impl Application for Applet {
                 self.can_hibernate = available;
                 Task::none()
             }
-            Message::ConfirmPowerAction => match self.pending_confirmation.take() {
-                Some(action) => {
+            Message::ConfirmPowerAction => match self.pending_confirmation {
+                Some((_, shown))
+                    if !crate::model::power_action::confirmation_ready(
+                        shown,
+                        std::time::Instant::now(),
+                    ) =>
+                {
+                    Task::none()
+                }
+                Some((action, _)) => {
+                    self.pending_confirmation = None;
                     let mut tasks = vec![action.perform()];
                     if let Some(p) = self.popup.take() {
                         tasks.push(destroy_popup(p));
@@ -613,7 +622,7 @@ impl Applet {
 
     fn perform_power_action(&mut self, action: PowerAction) -> Task<Message> {
         if action.needs_confirmation() {
-            self.pending_confirmation = Some(action);
+            self.pending_confirmation = Some((action, std::time::Instant::now()));
             return Task::none();
         }
 

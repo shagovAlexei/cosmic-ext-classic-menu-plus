@@ -132,7 +132,7 @@ impl AppletMenu {
                 row![
                     cosmic::widget::button::standard(fl!("cancel"))
                         .on_press(Message::CancelPowerAction),
-                    cosmic::widget::button::suggested(fl!("hibernate-confirm-accept"))
+                    cosmic::widget::button::suggested(fl!("confirm-yes"))
                         .on_press(Message::ConfirmPowerAction),
                 ]
                 .spacing(space_xxs)
@@ -152,6 +152,8 @@ impl AppletMenu {
                             )
                             .symbolic(true),
                         )
+                        // fixed padding keeps six icons inside the pane in every density
+                        .padding(8)
                         .on_press(Message::PowerOptionSelected(action))
                         .into()
                     })

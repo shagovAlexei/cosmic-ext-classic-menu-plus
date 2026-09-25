@@ -31,5 +31,5 @@ pin-to-panel=Pin to panel
 
 # power actions
 hibernate-confirm-question=Hibernate now?
-hibernate-confirm-accept=Hibernate
+confirm-yes=Yes
 cancel=Cancel
