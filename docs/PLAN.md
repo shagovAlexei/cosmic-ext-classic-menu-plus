@@ -115,23 +115,23 @@
 - [x] `CLAUDE.md`
 - [x] `docs/PLAN.md` (этот файл)
 - [x] Проверить, что проект собирается локально (`just build-debug`)
-- [ ] Проверить установку и запуск в панели: `sudo just install`, перезапуск `cosmic-panel`
+- [x] Проверить установку и запуск в панели: `sudo just install`, перезапуск `cosmic-panel`
 
 ### Этап 1. Гибернация (`feat/hibernate`)
-- [ ] `PowerAction::Hibernate` + `power_options::hibernate()`
-- [ ] Запрос `can_hibernate` при старте и `Applet::can_hibernate`
-- [ ] Символьная иконка гибернации в `res/icons/bundled/`
-- [ ] Подтверждение в попапе (`pending_confirmation`) и сброс при закрытии
-- [ ] Строки i18n (`en`, `ru`): подпись, вопрос, «Да», «Отмена»
-- [ ] Ручная проверка: гибернация, отмена, закрытие попапа во время подтверждения
+- [x] `PowerAction::Hibernate` + `power_options::hibernate()`
+- [x] Запрос `can_hibernate` при старте и `Applet::can_hibernate`
+- [x] Символьная иконка гибернации в `res/icons/bundled/`
+- [x] Подтверждение в попапе (`pending_confirmation`) и сброс при закрытии
+- [x] Строки i18n (`en`, `ru`): подпись, вопрос, «Да», «Отмена»
+- [x] Ручная проверка: гибернация, отмена, закрытие попапа во время подтверждения
 - [ ] Убрать `applet-hibernate` с панели
 
 ### Этап 2. Кнопки питания (`feat/power-buttons-config`)
-- [ ] `Serialize/Deserialize` для `PowerAction`, поле `power_buttons`
-- [ ] `create_power_menu` строится из конфига (фильтр по `can_hibernate`, дедупликация) и тесты на фильтрацию
-- [ ] Раздел настроек: видимость и ↑/↓
-- [ ] i18n
-- [ ] Ручная проверка: изменения применяются к открытому меню без перезапуска
+- [x] `Serialize/Deserialize` для `PowerAction`, поле `power_buttons`
+- [x] `create_power_menu` строится из конфига (фильтр по `can_hibernate`, дедупликация) и тесты на фильтрацию
+- [x] Раздел настроек: видимость и ↑/↓
+- [x] i18n
+- [x] Ручная проверка: изменения применяются к открытому меню без перезапуска
 
 ### Этап 3. Размеры и иконки (`feat/appearance`)
 - [ ] Поля `popup_width`, `popup_height`, `app_icon_size`, `list_density` с ограничением значений
