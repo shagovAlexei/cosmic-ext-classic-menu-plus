@@ -8,7 +8,7 @@
 
 **Tech Stack:** Rust 2024, libcosmic (`cosmic-config`, `toggler`, `settings::section`), serde, Fluent i18n.
 
-**Spec:** `docs/PLAN.md` section "2. Выбор и порядок кнопок питания" and "Этап 2" TODO list.
+**Spec:** `docs/PLAN.md` section "5. Выбор и порядок кнопок питания" and "9.2" TODO list.
 
 ## Global Constraints
 
@@ -39,7 +39,7 @@
 - Modify `applet/src/applet_menu.rs`: use config list; hide empty row.
 - Modify `settings/src/app.rs`: messages, update arms, "Power buttons" section.
 - Modify `settings/i18n/en/cosmic_ext_classic_menu_plus_settings.ftl` and `settings/i18n/ru/cosmic_ext_classic_menu_plus_settings.ftl`.
-- Modify `docs/PLAN.md`: tick Stage 2 boxes (after manual verification by the user).
+- Modify `docs/PLAN.md`: tick stage 9.2 boxes (after manual verification by the user).
 
 ---
 
@@ -423,4 +423,4 @@ Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>"
   7. Delete the file `~/.config/cosmic/io.github.shagovAlexei.cosmic-ext-classic-menu-plus/v1/power_buttons`, reopen the menu: six default buttons.
   8. Hibernate turned on in settings but unsupported by the system: still hidden in the menu (cannot be tested on the user's machine; covered by unit test).
 
-- [ ] **Step 7: Update `docs/PLAN.md`** ticking Stage 2 boxes once the user confirms Step 6, then commit.
+- [ ] **Step 7: Update `docs/PLAN.md`** ticking stage 9.2 boxes once the user confirms Step 6, then commit.

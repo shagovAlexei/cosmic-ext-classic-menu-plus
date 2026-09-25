@@ -8,7 +8,7 @@
 
 **Tech Stack:** Rust, libcosmic (`spin_button`, `dropdown`, `nav_bar`), cosmic-config, Fluent (`fl!`).
 
-**Spec:** `docs/PLAN.md`, section "3. Размеры и иконки" and stage 3 TODO.
+**Spec:** `docs/PLAN.md`, section "6. Размеры и иконки" and stage 9.3 TODO.
 
 ## Global Constraints
 
