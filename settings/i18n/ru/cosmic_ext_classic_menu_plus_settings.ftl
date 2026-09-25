@@ -29,3 +29,13 @@ auto = Автоматически
 username-prefered = Предпочтительное имя пользователя
 realname-prefered = Настоящее имя предпочтительно
 none = Нет
+
+power-buttons = Кнопки питания
+power-logout = Выйти
+power-suspend = Сон
+power-hibernate = Гибернация
+power-lock = Заблокировать экран
+power-reboot = Перезагрузить
+power-shutdown = Выключить
+move-up = Вверх
+move-down = Вниз

@@ -29,3 +29,13 @@ auto = Auto
 username-prefered = Username prefered
 realname-prefered = Realname prefered
 none = None
+
+power-buttons = Power buttons
+power-logout = Log out
+power-suspend = Suspend
+power-hibernate = Hibernate
+power-lock = Lock screen
+power-reboot = Restart
+power-shutdown = Shut down
+move-up = Move up
+move-down = Move down
