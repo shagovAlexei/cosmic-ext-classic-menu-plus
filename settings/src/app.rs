@@ -6,7 +6,7 @@ use cosmic::cosmic_config::CosmicConfigEntry;
 use cosmic::dialog::file_chooser::FileFilter;
 use cosmic::iced::{Alignment, Length};
 use cosmic::prelude::*;
-use cosmic::widget::{button, icon, menu, menu::{ItemWidth, ItemHeight}};
+use cosmic::widget::{button, icon, menu, nav_bar, menu::{ItemWidth, ItemHeight}};
 use cosmic::{iced::Background, widget::text, Element};
 use cosmic_ext_classic_menu_plus_applet::config::{
     AppletButtonStyle, AppletConfig, HorizontalPosition, UserWidgetStyle,
@@ -18,6 +18,13 @@ use cosmic_ext_classic_menu_plus_applet::model::power_action::{
 use std::collections::HashMap;
 use std::fs;
 use std::path::PathBuf;
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum Page {
+    General,
+    Appearance,
+    PowerButtons,
+}
 
 /// The application model stores app-specific state used to describe its interface and
 /// drive its logic.
@@ -32,6 +39,8 @@ pub struct AppModel {
     key_binds: HashMap<menu::KeyBind, MenuAction>,
     // Configuration data that persists between application runs.
     config: AppletConfig,
+    /// Navigation bar with the settings pages.
+    nav: nav_bar::Model,
 }
 
 /// Messages emitted by the application and its widgets.
@@ -74,6 +83,15 @@ impl cosmic::Application for AppModel {
         &mut self.core
     }
 
+    fn nav_model(&self) -> Option<&nav_bar::Model> {
+        Some(&self.nav)
+    }
+
+    fn on_nav_select(&mut self, id: nav_bar::Id) -> Task<cosmic::Action<Self::Message>> {
+        self.nav.activate(id);
+        Task::none()
+    }
+
     /// Initializes the application with any given flags and startup commands.
     fn init(
         mut core: cosmic::Core,
@@ -98,6 +116,21 @@ impl cosmic::Application for AppModel {
                 ),
             ]);
 
+        let mut nav = nav_bar::Model::default();
+        nav.insert()
+            .text(fl!("general"))
+            .icon(icon::from_name("preferences-system-symbolic"))
+            .data(Page::General)
+            .activate();
+        nav.insert()
+            .text(fl!("appearance"))
+            .icon(icon::from_name("preferences-desktop-theme-symbolic"))
+            .data(Page::Appearance);
+        nav.insert()
+            .text(fl!("power-buttons"))
+            .icon(icon::from_name("system-shutdown-symbolic"))
+            .data(Page::PowerButtons);
+
         // Construct the app model with the runtime's core.
         let app = AppModel {
             core,
@@ -106,6 +139,7 @@ impl cosmic::Application for AppModel {
             key_binds: HashMap::new(),
             // Optional configuration file for an application.
             config: AppletConfig::config(),
+            nav,
         };
 
         (app, Task::none())
@@ -205,8 +239,7 @@ impl cosmic::Application for AppModel {
                 .on_press(Message::OpenIconPicker) // 4. Open picker on click
         ];
 
-        let settings_container =
-            cosmic::widget::settings::view_column(vec![cosmic::widget::settings::section()
+        let general_section = cosmic::widget::settings::section()
                 .title(fl!("general"))
                 .add(cosmic::widget::settings::item(
                     fl!("app-menu-position"),
@@ -232,8 +265,14 @@ impl cosmic::Application for AppModel {
                     fl!("button-icon"),
                     button_icon,
                 ))
-                .into(),
-                self.power_buttons_section().into()]);
+                ;
+
+        let page: Element<'_, Message> = match self.nav.active_data::<Page>() {
+            Some(Page::Appearance) => self.appearance_section().into(),
+            Some(Page::PowerButtons) => self.power_buttons_section().into(),
+            _ => general_section.into(),
+        };
+        let settings_container = cosmic::widget::settings::view_column(vec![page]);
 
         cosmic::widget::scrollable(settings_container.padding([5, 10])).into()
     }
@@ -422,6 +461,10 @@ impl AppModel {
             PowerAction::Reboot => fl!("power-reboot"),
             PowerAction::Shutdown => fl!("power-shutdown"),
         }
+    }
+
+    fn appearance_section(&self) -> cosmic::widget::settings::Section<'_, Message> {
+        cosmic::widget::settings::section().title(fl!("appearance"))
     }
 
     fn power_buttons_section(&self) -> cosmic::widget::settings::Section<'_, Message> {

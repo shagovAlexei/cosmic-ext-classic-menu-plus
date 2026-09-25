@@ -39,3 +39,5 @@ power-reboot = Перезагрузить
 power-shutdown = Выключить
 move-up = Вверх
 move-down = Вниз
+
+appearance = Внешний вид

@@ -39,3 +39,5 @@ power-reboot = Restart
 power-shutdown = Shut down
 move-up = Move up
 move-down = Move down
+
+appearance = Appearance
