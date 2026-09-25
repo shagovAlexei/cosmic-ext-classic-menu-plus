@@ -11,3 +11,5 @@ vendor.tar
 build-dir
 flatpak-builder
 repo
+# Personal Claude Code settings (shared ones live in .claude/settings.json)
+.claude/settings.local.json
