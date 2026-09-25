@@ -213,7 +213,7 @@ Expected: all tests pass (17 = 10 old + 7 new), `Finished`.
 - [ ] **Step 7: Commit**
 
 ```bash
-git add applet/src/model/appearance.rs applet/src/model/mod.rs applet/src/config.rs docs/superpowers/plans/2026-09-25-appearance.md
+git add applet/src/model/appearance.rs applet/src/model/mod.rs applet/src/config.rs docs/superpowers/plans/03-appearance.md
 git commit -m "feat(config): appearance model, clamping and item_height
 
 Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>"
