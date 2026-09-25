@@ -235,7 +235,7 @@ impl cosmic::Application for AppModel {
                 .into(),
                 self.power_buttons_section().into()]);
 
-        settings_container.padding([5, 10]).into()
+        cosmic::widget::scrollable(settings_container.padding([5, 10])).into()
     }
 
     /// Display a context drawer if the context page is requested.
