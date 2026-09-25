@@ -114,7 +114,7 @@
 - [x] Форк на GitHub, клон, remote `upstream`
 - [x] `CLAUDE.md`
 - [x] `docs/PLAN.md` (этот файл)
-- [ ] Проверить, что проект собирается локально (`just build-debug`)
+- [x] Проверить, что проект собирается локально (`just build-debug`)
 - [ ] Проверить установку и запуск в панели: `sudo just install`, перезапуск `cosmic-panel`
 
 ### Этап 1. Гибернация (`feat/hibernate`)
