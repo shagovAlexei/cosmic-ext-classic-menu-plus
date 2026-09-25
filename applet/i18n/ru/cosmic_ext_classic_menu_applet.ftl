@@ -30,3 +30,8 @@ menu-label=Меню
 # контекстное меню приложения
 launch=Запустить
 pin-to-panel=Закрепить на панели
+
+# действия питания
+hibernate-confirm-question=Перейти в гибернацию?
+confirm-yes=Да
+cancel=Отмена

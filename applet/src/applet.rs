@@ -71,6 +71,10 @@ pub struct Applet {
     pub scroll_offset: f32,
     /// Viewport height for virtualization and selection scroll behavior.
     pub scroll_viewport_height: f32,
+    /// Whether logind reports hibernation as available.
+    pub can_hibernate: bool,
+    /// Power action waiting for in-popup confirmation.
+    pub pending_confirmation: Option<(PowerAction, std::time::Instant)>,
 }
 
 /// This is the enum that contains all the possible variants that your application will need to transmit messages.
@@ -83,6 +87,9 @@ pub enum Message {
     SearchFieldInput(String),
     SearchCleared,
     PowerOptionSelected(PowerAction),
+    HibernateSupport(bool),
+    ConfirmPowerAction,
+    CancelPowerAction,
     ApplicationSelected(Arc<ApplicationEntry>),
     CategorySelected(ApplicationCategory),
     LaunchTool(SystemTool),
@@ -150,6 +157,8 @@ impl Application for Applet {
             context_menus: std::collections::HashMap::new(),
             scroll_offset: 0.0,
             scroll_viewport_height: 0.0,
+            can_hibernate: false,
+            pending_confirmation: None,
         };
 
         // fetch current user asynchronously
@@ -168,10 +177,16 @@ impl Application for Applet {
             |res| cosmic::Action::App(Message::UpdateAvailableCategories(res.unwrap())),
         );
 
+        let fetch_can_hibernate_task =
+            Task::perform(crate::power_options::can_hibernate(), |available| {
+                cosmic::Action::App(Message::HibernateSupport(available))
+            });
+
         (
             window,
             Task::batch(vec![
                 fetch_current_user_task,
+                fetch_can_hibernate_task,
                 fetch_all_apps_task,
                 fetch_available_categories_task,
             ]),
@@ -246,6 +261,33 @@ impl Application for Applet {
             Message::SearchFieldInput(input) => self.update_search_field(input),
             Message::SearchCleared => self.clear_search(),
             Message::PowerOptionSelected(action) => self.perform_power_action(action),
+            Message::HibernateSupport(available) => {
+                self.can_hibernate = available;
+                Task::none()
+            }
+            Message::ConfirmPowerAction => match self.pending_confirmation {
+                Some((_, shown))
+                    if !crate::model::power_action::confirmation_ready(
+                        shown,
+                        std::time::Instant::now(),
+                    ) =>
+                {
+                    Task::none()
+                }
+                Some((action, _)) => {
+                    self.pending_confirmation = None;
+                    let mut tasks = vec![action.perform()];
+                    if let Some(p) = self.popup.take() {
+                        tasks.push(destroy_popup(p));
+                    }
+                    Task::batch(tasks)
+                }
+                None => Task::none(),
+            },
+            Message::CancelPowerAction => {
+                self.pending_confirmation = None;
+                Task::none()
+            }
             Message::ApplicationSelected(app) => self.launch_application(app, None),
             Message::CategorySelected(category) => self.select_category(category),
             Message::LaunchTool(tool) => self.launch_tool(tool),
@@ -495,6 +537,7 @@ impl Applet {
         self.selected_category = Some(ApplicationCategory::ALL);
         self.available_applications = load_apps();
         self.selected_item_index = None;
+        self.pending_confirmation = None;
 
         let mut tasks = vec![];
         self.popup_type = popup_type;
@@ -539,6 +582,7 @@ impl Applet {
     fn close_popup(&mut self, id: Id) -> Task<Message> {
         if self.popup.as_ref() == Some(&id) {
             self.popup = None;
+            self.pending_confirmation = None;
         }
 
         Task::none()
@@ -577,6 +621,11 @@ impl Applet {
     }
 
     fn perform_power_action(&mut self, action: PowerAction) -> Task<Message> {
+        if action.needs_confirmation() {
+            self.pending_confirmation = Some((action, std::time::Instant::now()));
+            return Task::none();
+        }
+
         let is_flatpak = std::env::var("FLATPAK_ID").is_ok();
 
         if action == PowerAction::Lock || action == PowerAction::Suspend {
