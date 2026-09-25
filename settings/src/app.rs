@@ -6,18 +6,26 @@ use cosmic::cosmic_config::CosmicConfigEntry;
 use cosmic::dialog::file_chooser::FileFilter;
 use cosmic::iced::{Alignment, Length};
 use cosmic::prelude::*;
-use cosmic::widget::{button, icon, menu, menu::{ItemWidth, ItemHeight}};
+use cosmic::widget::{button, icon, menu, nav_bar, menu::{ItemWidth, ItemHeight}};
 use cosmic::{iced::Background, widget::text, Element};
 use cosmic_ext_classic_menu_plus_applet::config::{
     AppletButtonStyle, AppletConfig, HorizontalPosition, UserWidgetStyle,
     VerticalPosition,
 };
+use cosmic_ext_classic_menu_plus_applet::model::appearance::{self, ListDensity};
 use cosmic_ext_classic_menu_plus_applet::model::power_action::{
     editor_rows, move_power_button, toggle_power_button, MoveDirection, PowerAction,
 };
 use std::collections::HashMap;
 use std::fs;
 use std::path::PathBuf;
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum Page {
+    General,
+    Appearance,
+    PowerButtons,
+}
 
 /// The application model stores app-specific state used to describe its interface and
 /// drive its logic.
@@ -32,6 +40,8 @@ pub struct AppModel {
     key_binds: HashMap<menu::KeyBind, MenuAction>,
     // Configuration data that persists between application runs.
     config: AppletConfig,
+    /// Navigation bar with the settings pages.
+    nav: nav_bar::Model,
 }
 
 /// Messages emitted by the application and its widgets.
@@ -50,6 +60,11 @@ pub enum Message {
     CustomIconSelected,
     PowerButtonToggled(PowerAction),
     PowerButtonMoved(PowerAction, MoveDirection),
+    PopupWidthChanged(u32),
+    PopupHeightChanged(u32),
+    AppIconSizeChanged(u16),
+    ListDensityChanged(usize),
+    ResetAppearance,
 }
 
 /// Create a COSMIC application from the app model
@@ -72,6 +87,15 @@ impl cosmic::Application for AppModel {
 
     fn core_mut(&mut self) -> &mut cosmic::Core {
         &mut self.core
+    }
+
+    fn nav_model(&self) -> Option<&nav_bar::Model> {
+        Some(&self.nav)
+    }
+
+    fn on_nav_select(&mut self, id: nav_bar::Id) -> Task<cosmic::Action<Self::Message>> {
+        self.nav.activate(id);
+        Task::none()
     }
 
     /// Initializes the application with any given flags and startup commands.
@@ -98,6 +122,21 @@ impl cosmic::Application for AppModel {
                 ),
             ]);
 
+        let mut nav = nav_bar::Model::default();
+        nav.insert()
+            .text(fl!("general"))
+            .icon(icon::from_name("preferences-system-symbolic"))
+            .data(Page::General)
+            .activate();
+        nav.insert()
+            .text(fl!("appearance"))
+            .icon(icon::from_name("preferences-desktop-theme-symbolic"))
+            .data(Page::Appearance);
+        nav.insert()
+            .text(fl!("power-buttons"))
+            .icon(icon::from_name("system-shutdown-symbolic"))
+            .data(Page::PowerButtons);
+
         // Construct the app model with the runtime's core.
         let app = AppModel {
             core,
@@ -106,6 +145,7 @@ impl cosmic::Application for AppModel {
             key_binds: HashMap::new(),
             // Optional configuration file for an application.
             config: AppletConfig::config(),
+            nav,
         };
 
         (app, Task::none())
@@ -205,8 +245,7 @@ impl cosmic::Application for AppModel {
                 .on_press(Message::OpenIconPicker) // 4. Open picker on click
         ];
 
-        let settings_container =
-            cosmic::widget::settings::view_column(vec![cosmic::widget::settings::section()
+        let general_section = cosmic::widget::settings::section()
                 .title(fl!("general"))
                 .add(cosmic::widget::settings::item(
                     fl!("app-menu-position"),
@@ -232,8 +271,21 @@ impl cosmic::Application for AppModel {
                     fl!("button-icon"),
                     button_icon,
                 ))
-                .into(),
-                self.power_buttons_section().into()]);
+                ;
+
+        let page: Element<'_, Message> = match self.nav.active_data::<Page>() {
+            Some(Page::Appearance) => cosmic::widget::column::with_children(vec![
+                self.appearance_section().into(),
+                cosmic::widget::button::standard(fl!("default-settings"))
+                    .on_press(Message::ResetAppearance)
+                    .into(),
+            ])
+            .spacing(cosmic::theme::active().cosmic().space_s())
+            .into(),
+            Some(Page::PowerButtons) => self.power_buttons_section().into(),
+            _ => general_section.into(),
+        };
+        let settings_container = cosmic::widget::settings::view_column(vec![page]);
 
         cosmic::widget::scrollable(settings_container.padding([5, 10])).into()
     }
@@ -381,6 +433,42 @@ impl cosmic::Application for AppModel {
 
                 Task::none()
             }
+            Message::PopupWidthChanged(value) => {
+                self.config.popup_width = appearance::clamp_popup_width(value);
+                self.write_config("popup width");
+                Task::none()
+            }
+            Message::PopupHeightChanged(value) => {
+                self.config.popup_height = appearance::clamp_popup_height(value);
+                self.write_config("popup height");
+                Task::none()
+            }
+            Message::AppIconSizeChanged(value) => {
+                // One step below the minimum means "auto" (follow the theme).
+                self.config.app_icon_size = if value < appearance::ICON_SIZE_RANGE.0 {
+                    appearance::DEFAULT_ICON_SIZE
+                } else {
+                    appearance::clamp_icon_size(value)
+                };
+                self.write_config("app icon size");
+                Task::none()
+            }
+            Message::ListDensityChanged(index) => {
+                self.config.list_density = match index {
+                    0 => ListDensity::Compact,
+                    _ => ListDensity::Normal,
+                };
+                self.write_config("list density");
+                Task::none()
+            }
+            Message::ResetAppearance => {
+                self.config.popup_width = appearance::DEFAULT_POPUP_WIDTH;
+                self.config.popup_height = appearance::DEFAULT_POPUP_HEIGHT;
+                self.config.app_icon_size = appearance::DEFAULT_ICON_SIZE;
+                self.config.list_density = ListDensity::default();
+                self.write_config("appearance defaults");
+                Task::none()
+            }
             Message::ToggleContextPage(context_page) => {
                 if self.context_page == context_page {
                     // Close the context drawer if the toggled context page is the same.
@@ -422,6 +510,83 @@ impl AppModel {
             PowerAction::Reboot => fl!("power-reboot"),
             PowerAction::Shutdown => fl!("power-shutdown"),
         }
+    }
+
+    fn write_config(&self, what: &str) {
+        if let Err(err) = self
+            .config
+            .write_entry(AppletConfig::config_handler().as_ref().unwrap())
+        {
+            log::error!("failed to write {what}: {err}");
+        }
+    }
+
+    fn appearance_section(&self) -> cosmic::widget::settings::Section<'_, Message> {
+        let width = appearance::clamp_popup_width(self.config.popup_width);
+        let height = appearance::clamp_popup_height(self.config.popup_height);
+        let auto_icon = self.config.app_icon_size == appearance::DEFAULT_ICON_SIZE;
+        let auto_step = appearance::ICON_SIZE_RANGE.0 - 2;
+        let icon_size = if auto_icon {
+            auto_step
+        } else {
+            appearance::clamp_icon_size(self.config.app_icon_size)
+        };
+        let icon_label = if auto_icon {
+            fl!("icon-size-auto")
+        } else {
+            icon_size.to_string()
+        };
+        let density = match self.config.list_density {
+            ListDensity::Compact => 0,
+            ListDensity::Normal => 1,
+        };
+
+        cosmic::widget::settings::section()
+            .title(fl!("appearance"))
+            .add(cosmic::widget::settings::item(
+                fl!("popup-width"),
+                cosmic::widget::spin_button(
+                    width.to_string(),
+                    fl!("popup-width"),
+                    width,
+                    10,
+                    appearance::POPUP_WIDTH_RANGE.0,
+                    appearance::POPUP_WIDTH_RANGE.1,
+                    Message::PopupWidthChanged,
+                ),
+            ))
+            .add(cosmic::widget::settings::item(
+                fl!("popup-height"),
+                cosmic::widget::spin_button(
+                    height.to_string(),
+                    fl!("popup-height"),
+                    height,
+                    10,
+                    appearance::POPUP_HEIGHT_RANGE.0,
+                    appearance::POPUP_HEIGHT_RANGE.1,
+                    Message::PopupHeightChanged,
+                ),
+            ))
+            .add(cosmic::widget::settings::item(
+                fl!("app-icon-size"),
+                cosmic::widget::spin_button(
+                    icon_label,
+                    fl!("app-icon-size"),
+                    icon_size,
+                    2,
+                    auto_step,
+                    appearance::ICON_SIZE_RANGE.1,
+                    Message::AppIconSizeChanged,
+                ),
+            ))
+            .add(cosmic::widget::settings::item(
+                fl!("list-density"),
+                cosmic::widget::dropdown(
+                    vec![fl!("density-compact"), fl!("density-normal")],
+                    Some(density),
+                    Message::ListDensityChanged,
+                ),
+            ))
     }
 
     fn power_buttons_section(&self) -> cosmic::widget::settings::Section<'_, Message> {
