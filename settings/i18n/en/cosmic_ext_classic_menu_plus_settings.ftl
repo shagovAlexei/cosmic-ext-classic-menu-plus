@@ -52,3 +52,14 @@ icon-size-auto = Auto
 favorites = Favorites
 favorites-empty = No favorite apps yet. Right-click an app in the menu and choose "Add to favorites".
 favorite-remove = Remove
+
+categories = Categories
+new-category = New category
+category-name-placeholder = Category name
+category-icon = Icon
+hidden-apps = Hidden applications
+hidden-apps-empty = No hidden applications.
+unhide = Unhide
+moved-apps = Moved applications
+moved-apps-empty = No applications have been moved to another category.
+reset-category = Reset
