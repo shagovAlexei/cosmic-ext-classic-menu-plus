@@ -13,6 +13,12 @@ pub struct ApplicationCategory {
 }
 
 impl ApplicationCategory {
+    pub const FAVORITES: ApplicationCategory = ApplicationCategory {
+        display_name: "favorites",
+        icon_svg_bytes: include_bytes!("../../../res/icons/bundled/starred-symbolic.svg"),
+        mime_name: "",
+        permanent: true,
+    };
     pub const ALL: ApplicationCategory = ApplicationCategory {
         display_name: "all-applications",
         icon_svg_bytes: include_bytes!("../../../res/icons/bundled/open-menu-symbolic.svg"),
@@ -116,6 +122,7 @@ impl ApplicationCategory {
 
     pub fn get_display_name(&self) -> String {
         match self.display_name {
+            "favorites" => fl!("favorites"),
             "all-applications" => fl!("all-applications"),
             "recently-used" => fl!("recently-used"),
             "audio" => fl!("audio"),

@@ -5,3 +5,4 @@ pub mod system_tool;
 pub mod power_action;
 pub mod popup_type;
 pub mod appearance;
+pub mod favorites;

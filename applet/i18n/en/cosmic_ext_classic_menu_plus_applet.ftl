@@ -33,3 +33,6 @@ pin-to-panel=Pin to panel
 hibernate-confirm-question=Hibernate now?
 confirm-yes=Yes
 cancel=Cancel
+
+favorites=Favorites
+add-to-favorites=Add to favorites
