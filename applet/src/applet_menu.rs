@@ -14,6 +14,7 @@ use crate::applet::{Applet, Message};
 use crate::config::{HorizontalPosition, VerticalPosition};
 use crate::fl;
 use crate::model::appearance;
+use crate::model::application_category::{ApplicationCategory, CategoryIcon};
 use crate::model::application_entry::ApplicationEntry;
 use crate::model::power_action::PowerAction;
 use crate::widgets::VirtualizedAppList;
@@ -24,6 +25,9 @@ pub enum ContextMenuAction {
     LaunchApplicationWithAction(usize, usize),
     PinToPanel(usize, bool),
     ToggleFavorite(usize),
+    MoveToCategory(usize, usize),
+    ResetCategory(usize),
+    HideApp(usize),
 }
 
 impl menu::Action for ContextMenuAction {
@@ -38,8 +42,23 @@ impl menu::Action for ContextMenuAction {
                 Message::PinToAppTrayIndex(*index, *favorites)
             }
             ContextMenuAction::ToggleFavorite(index) => Message::ToggleFavoriteAt(*index),
+            ContextMenuAction::MoveToCategory(app_index, target_index) => {
+                Message::MoveApplicationToCategory(*app_index, *target_index)
+            }
+            ContextMenuAction::ResetCategory(index) => Message::ResetApplicationCategory(*index),
+            ContextMenuAction::HideApp(index) => Message::HideApplicationAt(*index),
         }
     }
+}
+
+/// State needed to build a single app's right-click menu.
+pub struct AppMenuState<'a> {
+    pub pinned_to_panel: bool,
+    pub favorite: bool,
+    /// Categories offered in "Move to...", in display order.
+    pub move_targets: &'a [ApplicationCategory],
+    /// Index into `move_targets` the app is currently moved to, if any.
+    pub current_target: Option<usize>,
 }
 
 pub struct AppletMenu;
@@ -120,13 +139,12 @@ impl AppletMenu {
             .into()
     }
 
-    /// Right-click menu of an app entry: launch, pin to panel, favorite, then
-    /// the app's own desktop actions.
+    /// Right-click menu of an app entry: launch, pin to panel, favorite,
+    /// move to another category, hide, then the app's own desktop actions.
     pub fn build_app_context_menu(
         app: &ApplicationEntry,
         app_index: usize,
-        pinned_to_panel: bool,
-        favorite: bool,
+        state: AppMenuState,
     ) -> Vec<menu::Tree<Message>> {
         let mut buttons: Vec<menu::Item<ContextMenuAction, _>> = vec![
             menu::Item::Button(
@@ -137,16 +155,54 @@ impl AppletMenu {
             menu::Item::CheckBox(
                 fl!("pin-to-panel"),
                 None,
-                pinned_to_panel,
-                ContextMenuAction::PinToPanel(app_index, pinned_to_panel),
+                state.pinned_to_panel,
+                ContextMenuAction::PinToPanel(app_index, state.pinned_to_panel),
             ),
             menu::Item::CheckBox(
                 fl!("add-to-favorites"),
                 None,
-                favorite,
+                state.favorite,
                 ContextMenuAction::ToggleFavorite(app_index),
             ),
         ];
+
+        if !state.move_targets.is_empty() {
+            let move_items: Vec<menu::Item<ContextMenuAction, _>> = state
+                .move_targets
+                .iter()
+                .enumerate()
+                .map(|(target_index, category)| {
+                    menu::Item::CheckBox(
+                        category.get_display_name(),
+                        None,
+                        state.current_target == Some(target_index),
+                        ContextMenuAction::MoveToCategory(app_index, target_index),
+                    )
+                })
+                .collect();
+
+            buttons.push(menu::Item::Divider);
+            buttons.push(menu::Item::Folder(fl!("move-to"), move_items));
+            buttons.push(if state.current_target.is_some() {
+                menu::Item::Button(
+                    fl!("restore-category"),
+                    None,
+                    ContextMenuAction::ResetCategory(app_index),
+                )
+            } else {
+                menu::Item::ButtonDisabled(
+                    fl!("restore-category"),
+                    None,
+                    ContextMenuAction::ResetCategory(app_index),
+                )
+            });
+        }
+
+        buttons.push(menu::Item::Button(
+            fl!("hide-from-menu"),
+            None,
+            ContextMenuAction::HideApp(app_index),
+        ));
 
         let actions: Vec<menu::Item<ContextMenuAction, _>> = app
             .desktop_actions
@@ -166,6 +222,19 @@ impl AppletMenu {
         }
 
         menu::items(&std::collections::HashMap::new(), buttons)
+    }
+
+    fn category_icon(category: &ApplicationCategory) -> Element<'static, Message> {
+        match &category.icon {
+            CategoryIcon::Bundled(bytes) => cosmic::widget::icon::from_svg_bytes(*bytes)
+                .symbolic(true)
+                .icon()
+                .into(),
+            CategoryIcon::Named(name) => cosmic::widget::icon::from_name(name.as_str())
+                .symbolic(true)
+                .icon()
+                .into(),
+        }
     }
 
     fn power_action_icon(action: PowerAction) -> &'static [u8] {
@@ -207,9 +276,9 @@ impl AppletMenu {
                     .into_iter()
                     .map(|action| {
                         cosmic::widget::button::icon(
-                            cosmic::widget::icon::from_svg_bytes(
-                                AppletMenu::power_action_icon(action),
-                            )
+                            cosmic::widget::icon::from_svg_bytes(AppletMenu::power_action_icon(
+                                action,
+                            ))
                             .symbolic(true),
                         )
                         // fixed padding keeps six icons inside the pane in every density
@@ -257,12 +326,7 @@ impl AppletMenu {
             .map(|category| {
                 cosmic::widget::button::custom(
                     row![
-                        container(
-                            cosmic::widget::icon::from_svg_bytes(category.icon_svg_bytes)
-                                .symbolic(true)
-                                .icon()
-                        )
-                        .padding([0, space_m]),
+                        container(AppletMenu::category_icon(category)).padding([0, space_m]),
                         text(category.get_display_name()),
                     ]
                     .align_y(Alignment::Center),
@@ -287,7 +351,7 @@ impl AppletMenu {
         let permanent_count = applet
             .available_categories
             .iter()
-            .filter(|c| c.permanent)
+            .filter(|c| c.is_permanent())
             .count();
         if !categories_pane.is_empty() {
             categories_pane.insert(permanent_count, horizontal_divider);

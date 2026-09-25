@@ -127,7 +127,6 @@ pub fn hibernate_available_from(res: zbus::Result<IsSupported>) -> bool {
     matches!(res, Ok(IsSupported::Yes | IsSupported::Challenge))
 }
 
-
 #[cfg(test)]
 mod tests {
     use super::*;
