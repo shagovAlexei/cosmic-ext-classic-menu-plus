@@ -12,6 +12,9 @@ use cosmic_ext_classic_menu_plus_applet::config::{
     AppletButtonStyle, AppletConfig, HorizontalPosition, UserWidgetStyle,
     VerticalPosition,
 };
+use cosmic_ext_classic_menu_plus_applet::model::power_action::{
+    editor_rows, move_power_button, toggle_power_button, MoveDirection, PowerAction,
+};
 use std::collections::HashMap;
 use std::fs;
 use std::path::PathBuf;
@@ -45,6 +48,8 @@ pub enum Message {
     OpenIconPicker,
     ButtonIconChanged(PathBuf),
     CustomIconSelected,
+    PowerButtonToggled(PowerAction),
+    PowerButtonMoved(PowerAction, MoveDirection),
 }
 
 /// Create a COSMIC application from the app model
@@ -227,9 +232,10 @@ impl cosmic::Application for AppModel {
                     fl!("button-icon"),
                     button_icon,
                 ))
-                .into()]);
+                .into(),
+                self.power_buttons_section().into()]);
 
-        settings_container.padding([5, 10]).into()
+        cosmic::widget::scrollable(settings_container.padding([5, 10])).into()
     }
 
     /// Display a context drawer if the context page is requested.
@@ -357,6 +363,24 @@ impl cosmic::Application for AppModel {
 
                 Task::none()
             }
+            Message::PowerButtonToggled(action) => {
+                toggle_power_button(&mut self.config.power_buttons, action);
+
+                self.config
+                    .write_entry(AppletConfig::config_handler().as_ref().unwrap())
+                    .expect("Failed to write power buttons config");
+
+                Task::none()
+            }
+            Message::PowerButtonMoved(action, direction) => {
+                move_power_button(&mut self.config.power_buttons, action, direction);
+
+                self.config
+                    .write_entry(AppletConfig::config_handler().as_ref().unwrap())
+                    .expect("Failed to write power buttons config");
+
+                Task::none()
+            }
             Message::ToggleContextPage(context_page) => {
                 if self.context_page == context_page {
                     // Close the context drawer if the toggled context page is the same.
@@ -389,6 +413,51 @@ impl cosmic::Application for AppModel {
 }
 
 impl AppModel {
+    fn power_action_label(action: PowerAction) -> String {
+        match action {
+            PowerAction::Logout => fl!("power-logout"),
+            PowerAction::Suspend => fl!("power-suspend"),
+            PowerAction::Hibernate => fl!("power-hibernate"),
+            PowerAction::Lock => fl!("power-lock"),
+            PowerAction::Reboot => fl!("power-reboot"),
+            PowerAction::Shutdown => fl!("power-shutdown"),
+        }
+    }
+
+    fn power_buttons_section(&self) -> cosmic::widget::settings::Section<'_, Message> {
+        let space_xxs = cosmic::theme::active().cosmic().space_xxs();
+        let rows = editor_rows(&self.config.power_buttons);
+        let enabled_count = rows.iter().filter(|(_, enabled)| *enabled).count();
+
+        let mut section = cosmic::widget::settings::section().title(fl!("power-buttons"));
+        for (index, (action, enabled)) in rows.into_iter().enumerate() {
+            let up = cosmic::widget::button::icon(icon::from_name("go-up-symbolic"))
+                .on_press_maybe(
+                    (enabled && index > 0)
+                        .then_some(Message::PowerButtonMoved(action, MoveDirection::Up)),
+                );
+            let down = cosmic::widget::button::icon(icon::from_name("go-down-symbolic"))
+                .on_press_maybe(
+                    (enabled && index + 1 < enabled_count)
+                        .then_some(Message::PowerButtonMoved(action, MoveDirection::Down)),
+                );
+            let controls = cosmic::iced::widget::row![
+                up,
+                down,
+                cosmic::widget::toggler(enabled)
+                    .on_toggle(move |_| Message::PowerButtonToggled(action)),
+            ]
+            .spacing(space_xxs)
+            .align_y(Alignment::Center);
+
+            section = section.add(cosmic::widget::settings::item(
+                Self::power_action_label(action),
+                controls,
+            ));
+        }
+        section
+    }
+
     /// Helper to find available system icons in standard locations.
     fn system_icon_names() -> Vec<String> {
         // Prefer runtime discovery using XDG_DATA_DIRS so the app works correctly
