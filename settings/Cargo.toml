@@ -1,11 +1,11 @@
 [package]
-name = "cosmic-ext-classic-menu-settings"
+name = "cosmic-ext-classic-menu-plus-settings"
 version = "0.0.14"
 edition = "2024"
 authors = ["Kamil Lihan <k.lihan@outlook.com>"]
 license = "GPL-3.0-only"
 description = "A launcher applet for COSMIC Desktop"
-repository = "https://github.com/championpeak87/cosmic-ext-classic-menu"
+repository = "https://github.com/shagovAlexei/cosmic-ext-classic-menu-plus"
 
 [build-dependencies]
 vergen = { version = "8", features = ["git", "gitcl"] }
@@ -17,7 +17,7 @@ i18n-embed-fl = { workspace = true }
 open = { workspace = true }
 rust-embed = { workspace = true }
 tokio = { workspace = true, features = ["rt-multi-thread", "macros"] }
-cosmic-ext-classic-menu-applet = { path = "../applet" }
+cosmic-ext-classic-menu-plus-applet = { path = "../applet" }
 simple_logger = { workspace = true }
 log = { workspace = true }
 i18n-embed = { workspace = true, features = ["fluent-system", "desktop-requester"] }

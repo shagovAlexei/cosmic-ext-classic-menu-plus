@@ -17,8 +17,8 @@ pub fn dbus_service_subscription() -> Subscription<Message> {
             match zbus::connection::Builder::session() {
                 Ok(builder) => {
                     match builder
-                        .name("com.championpeak87.CosmicExtClassicMenu")
-                        .and_then(|b| b.serve_at("/com/championpeak87/CosmicExtClassicMenu", service))
+                        .name("io.github.shagovAlexei.CosmicExtClassicMenuPlus")
+                        .and_then(|b| b.serve_at("/io/github/shagovAlexei/CosmicExtClassicMenuPlus", service))
                         .unwrap()
                         .build()
                         .await
