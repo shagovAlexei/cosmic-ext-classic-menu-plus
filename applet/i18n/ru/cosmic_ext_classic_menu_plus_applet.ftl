@@ -35,3 +35,6 @@ pin-to-panel=Закрепить на панели
 hibernate-confirm-question=Перейти в гибернацию?
 confirm-yes=Да
 cancel=Отмена
+
+favorites=Избранное
+add-to-favorites=В избранное

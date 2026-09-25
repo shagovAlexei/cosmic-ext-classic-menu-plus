@@ -25,6 +25,7 @@ pub struct AppletConfig {
     pub popup_height: u32,
     pub app_icon_size: u16,
     pub list_density: ListDensity,
+    pub pinned_apps: Vec<String>,
 }
 
 impl Default for AppletConfig {
@@ -42,6 +43,7 @@ impl Default for AppletConfig {
             popup_height: DEFAULT_POPUP_HEIGHT,
             app_icon_size: DEFAULT_ICON_SIZE,
             list_density: ListDensity::default(),
+            pinned_apps: vec![],
         }
     }
 }

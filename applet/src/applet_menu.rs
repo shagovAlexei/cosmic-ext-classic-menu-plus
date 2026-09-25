@@ -14,6 +14,7 @@ use crate::applet::{Applet, Message};
 use crate::config::{HorizontalPosition, VerticalPosition};
 use crate::fl;
 use crate::model::appearance;
+use crate::model::application_entry::ApplicationEntry;
 use crate::model::power_action::PowerAction;
 use crate::widgets::VirtualizedAppList;
 
@@ -22,6 +23,7 @@ pub enum ContextMenuAction {
     LaunchApplication(usize),
     LaunchApplicationWithAction(usize, usize),
     PinToPanel(usize, bool),
+    ToggleFavorite(usize),
 }
 
 impl menu::Action for ContextMenuAction {
@@ -35,6 +37,7 @@ impl menu::Action for ContextMenuAction {
             ContextMenuAction::PinToPanel(index, favorites) => {
                 Message::PinToAppTrayIndex(*index, *favorites)
             }
+            ContextMenuAction::ToggleFavorite(index) => Message::ToggleFavoriteAt(*index),
         }
     }
 }
@@ -115,6 +118,54 @@ impl AppletMenu {
                     .min_width(AppletMenu::POPUP_MIN_WIDTH),
             )
             .into()
+    }
+
+    /// Right-click menu of an app entry: launch, pin to panel, favorite, then
+    /// the app's own desktop actions.
+    pub fn build_app_context_menu(
+        app: &ApplicationEntry,
+        app_index: usize,
+        pinned_to_panel: bool,
+        favorite: bool,
+    ) -> Vec<menu::Tree<Message>> {
+        let mut buttons: Vec<menu::Item<ContextMenuAction, _>> = vec![
+            menu::Item::Button(
+                fl!("launch"),
+                None,
+                ContextMenuAction::LaunchApplication(app_index),
+            ),
+            menu::Item::CheckBox(
+                fl!("pin-to-panel"),
+                None,
+                pinned_to_panel,
+                ContextMenuAction::PinToPanel(app_index, pinned_to_panel),
+            ),
+            menu::Item::CheckBox(
+                fl!("add-to-favorites"),
+                None,
+                favorite,
+                ContextMenuAction::ToggleFavorite(app_index),
+            ),
+        ];
+
+        let actions: Vec<menu::Item<ContextMenuAction, _>> = app
+            .desktop_actions
+            .iter()
+            .enumerate()
+            .map(|(action_index, action)| {
+                menu::Item::Button(
+                    action.name.to_string(),
+                    None,
+                    ContextMenuAction::LaunchApplicationWithAction(app_index, action_index),
+                )
+            })
+            .collect();
+        if !actions.is_empty() {
+            buttons.push(menu::Item::Divider);
+            buttons.extend(actions);
+        }
+
+        menu::items(&std::collections::HashMap::new(), buttons)
     }
 
     fn power_action_icon(action: PowerAction) -> &'static [u8] {
@@ -233,8 +284,13 @@ impl AppletMenu {
                 .align_y(Alignment::Center)
                 .padding(5)
                 .into();
+        let permanent_count = applet
+            .available_categories
+            .iter()
+            .filter(|c| c.permanent)
+            .count();
         if !categories_pane.is_empty() {
-            categories_pane.insert(2, horizontal_divider);
+            categories_pane.insert(permanent_count, horizontal_divider);
         }
 
         // add power menu to the bottom of the categories pane
