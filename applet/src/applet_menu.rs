@@ -142,8 +142,12 @@ impl AppletMenu {
             .align_x(Alignment::Center)
             .into()
         } else {
+            let actions = PowerAction::visible(&applet.config.power_buttons, applet.can_hibernate);
+            if actions.is_empty() {
+                return cosmic::widget::Space::new().width(0).height(0).into();
+            }
             cosmic::widget::row::with_children(
-                PowerAction::visible(applet.can_hibernate)
+                actions
                     .into_iter()
                     .map(|action| {
                         cosmic::widget::button::icon(

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 use crate::fl;
+use crate::model::power_action::PowerAction;
 use cosmic::{
     cosmic_config::{self, cosmic_config_derive::CosmicConfigEntry, Config, CosmicConfigEntry},
     Application,
@@ -18,6 +19,7 @@ pub struct AppletConfig {
     pub button_label: String,
     pub button_icon: String,
     pub recent_applications: Vec<RecentApplication>,
+    pub power_buttons: Vec<PowerAction>,
 }
 
 impl Default for AppletConfig {
@@ -30,6 +32,7 @@ impl Default for AppletConfig {
             button_label: fl!("menu-label").to_owned(),
             button_icon: format!("/usr/share/cosmic/{}/applet-buttons/default.svg", crate::applet::Applet::APP_ID).to_owned(),
             recent_applications: vec![],
+            power_buttons: PowerAction::DEFAULT_ORDER.to_vec(),
         }
     }
 }
