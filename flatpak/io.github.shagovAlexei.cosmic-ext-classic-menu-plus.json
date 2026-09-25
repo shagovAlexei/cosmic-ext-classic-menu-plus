@@ -1,5 +1,5 @@
 {
-  "id": "com.championpeak87.cosmic-ext-classic-menu",
+  "id": "io.github.shagovAlexei.cosmic-ext-classic-menu-plus",
   "runtime": "org.freedesktop.Platform",
   "runtime-version": "25.08",
   "base": "com.system76.Cosmic.BaseApp",
@@ -39,19 +39,19 @@
   "build-options": {
     "append-path": "/usr/lib/sdk/rust-stable/bin",
     "env": {
-      "CARGO_HOME": "/run/build/cosmic-ext-classic-menu/cargo"
+      "CARGO_HOME": "/run/build/cosmic-ext-classic-menu-plus/cargo"
     }
   },
   "modules": [
     {
-      "name": "cosmic-ext-classic-menu",
+      "name": "cosmic-ext-classic-menu-plus",
       "buildsystem": "simple",
       "build-commands": [
         "just build-release --verbose",
         "just prefix=/app install",
         "cp ./flatpak/launch-applet.sh /app",
         "chmod +x /app/launch-applet.sh",
-        "cp ./flatpak/com.championpeak87.cosmic-ext-classic-menu.desktop /app/share/applications/com.championpeak87.cosmic-ext-classic-menu.desktop"
+        "cp ./flatpak/io.github.shagovAlexei.cosmic-ext-classic-menu-plus.desktop /app/share/applications/io.github.shagovAlexei.cosmic-ext-classic-menu-plus.desktop"
       ],
       "sources": [
         {

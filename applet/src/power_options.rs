@@ -26,6 +26,25 @@ pub async fn suspend() -> zbus::Result<()> {
     manager_proxy.suspend(true).await
 }
 
+pub async fn hibernate() -> zbus::Result<()> {
+    let connection = Connection::system().await?;
+    let manager_proxy = ManagerProxy::new(&connection).await?;
+    manager_proxy.hibernate(true).await
+}
+
+pub async fn can_hibernate() -> bool {
+    let res = async {
+        let connection = Connection::system().await?;
+        let manager_proxy = ManagerProxy::new(&connection).await?;
+        manager_proxy.can_hibernate().await
+    }
+    .await;
+    if let Err(e) = &res {
+        log::warn!("CanHibernate query failed: {e}");
+    }
+    crate::model::power_action::hibernate_available_from(res)
+}
+
 pub async fn lock() -> zbus::Result<()> {
     let connection = Connection::system().await?;
     let manager_proxy = ManagerProxy::new(&connection).await?;

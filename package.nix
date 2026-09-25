@@ -10,7 +10,7 @@
 }:
 
 rustPlatform.buildRustPackage rec {
-  pname = "cosmic-ext-classic-menu";
+  pname = "cosmic-ext-classic-menu-plus";
   version = "0.0.11"; # Update this based on the latest release or tag
 
   src = fetchFromGitHub {
@@ -53,15 +53,15 @@ rustPlatform.buildRustPackage rec {
     (placeholder "out")
     "--set"
     "bin-src"
-    "target/release/cosmic-ext-classic-menu-applet"
+    "target/release/cosmic-ext-classic-menu-plus-applet"
     "--set"
     "settings-bin-src"
-    "target/release/cosmic-ext-classic-menu-settings"
+    "target/release/cosmic-ext-classic-menu-plus-settings"
   ];
   
   meta = with lib; {
     description = "A classic-style application menu for the COSMIC Desktop";
-    homepage = "https://github.com/championpeak87/cosmic-ext-classic-menu";
+    homepage = "https://github.com/shagovAlexei/cosmic-ext-classic-menu-plus";
     license = licenses.gpl3Only;
     maintainers = [ ];
     platforms = platforms.linux;

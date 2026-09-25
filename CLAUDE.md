@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project
 
-Classic-style application launcher applet for the COSMIC desktop, written in Rust on top of `libcosmic` (iced fork). This repo is a fork of `championpeak87/cosmic-ext-classic-menu` (remote `upstream`); our remote is `origin` (`shagovAlexei/cosmic-ext-classic-menu`). Keep changes merge-friendly with upstream: additive config fields, no gratuitous renames/reformatting of upstream code. Fork roadmap and TODO list: `docs/PLAN.md`.
+Classic-style application launcher applet for the COSMIC desktop, written in Rust on top of `libcosmic` (iced fork). This repo is a fork of `championpeak87/cosmic-ext-classic-menu` (remote `upstream`), renamed to `cosmic-ext-classic-menu-plus` so it can be installed alongside the original; our remote is `origin` (`shagovAlexei/cosmic-ext-classic-menu-plus`). The rename touched the crate/binary names, `APP_ID`, config path, D-Bus name and packaging files, so merging `upstream` will conflict there: resolve by keeping the `-plus` names. Keep changes merge-friendly with upstream: additive config fields, no gratuitous reformatting of upstream code. Fork roadmap and TODO list: `docs/PLAN.md`.
 
 ## Commands
 
@@ -13,10 +13,10 @@ just build-debug           # cargo build for both crates (applet + settings)
 just build-release         # release build
 sudo just install          # install binaries, .desktop, metainfo, icons into /usr
 just check                 # cargo fmt + clippy --all-features -W clippy::pedantic
-just run-logs -p cosmic-ext-classic-menu-applet   # run with RUST_LOG/backtrace
-cargo build -p cosmic-ext-classic-menu-applet     # single crate
-cargo run -p cosmic-ext-classic-menu-settings     # run the settings app standalone
-cargo test -p cosmic-ext-classic-menu-applet <name>  # single test (no tests exist yet)
+just run-logs -p cosmic-ext-classic-menu-plus-applet   # run with RUST_LOG/backtrace
+cargo build -p cosmic-ext-classic-menu-plus-applet     # single crate
+cargo run -p cosmic-ext-classic-menu-plus-settings     # run the settings app standalone
+cargo test -p cosmic-ext-classic-menu-plus-applet <name>  # single test (no tests exist yet)
 ```
 
 The applet binary only works when launched by `cosmic-panel`. To try changes: `just build-release && sudo just install`, then restart the panel (`killall cosmic-panel`, it respawns) or remove/re-add the applet. The settings app runs standalone.
@@ -27,12 +27,12 @@ Logging goes through `simple_logger::init_with_env()`, so use `RUST_LOG=debug`.
 
 Cargo workspace with two crates:
 
-- **`applet/`** (`cosmic-ext-classic-menu-applet`): the panel applet. It is also a **library** (`lib.rs` re-exports all modules), so the settings crate can reuse `config::AppletConfig` and `applet::APP_ID`.
-- **`settings/`** (`cosmic-ext-classic-menu-settings`): a standalone windowed COSMIC app (`settings/src/app.rs`) that edits the same config. It is launched from the applet's right-click menu via `SystemTool::APPLET_SETTINGS`.
+- **`applet/`** (`cosmic-ext-classic-menu-plus-applet`): the panel applet. It is also a **library** (`lib.rs` re-exports all modules), so the settings crate can reuse `config::AppletConfig` and `applet::APP_ID`.
+- **`settings/`** (`cosmic-ext-classic-menu-plus-settings`): a standalone windowed COSMIC app (`settings/src/app.rs`) that edits the same config. It is launched from the applet's right-click menu via `SystemTool::APPLET_SETTINGS`.
 
 ### Config is the contract between the two crates
 
-`applet/src/config.rs` holds `AppletConfig`, a `#[derive(CosmicConfigEntry)]` struct with `#[version = 1]` and id `com.championpeak87.cosmic-ext-classic-menu`. It is stored by cosmic-config under `~/.config/cosmic/com.championpeak87.cosmic-ext-classic-menu/v1/`, one file per field. The settings app writes fields with `config.write_entry(&AppletConfig::config_handler())`. The applet watches with `core.watch_config::<AppletConfig>` → `Message::UpdateConfig`, so changes apply live. The applet also writes to config itself (`recent_applications` launch counts). New fields need a `Default` value so existing installs keep loading. Missing keys fall back via `get_entry(...).unwrap_or_else(|(_, c)| c)`.
+`applet/src/config.rs` holds `AppletConfig`, a `#[derive(CosmicConfigEntry)]` struct with `#[version = 1]` and id `io.github.shagovAlexei.cosmic-ext-classic-menu-plus`. It is stored by cosmic-config under `~/.config/cosmic/io.github.shagovAlexei.cosmic-ext-classic-menu-plus/v1/`, one file per field. The settings app writes fields with `config.write_entry(&AppletConfig::config_handler())`. The applet watches with `core.watch_config::<AppletConfig>` → `Message::UpdateConfig`, so changes apply live. The applet also writes to config itself (`recent_applications` launch counts). New fields need a `Default` value so existing installs keep loading. Missing keys fall back via `get_entry(...).unwrap_or_else(|(_, c)| c)`.
 
 The applet also reads and writes **`cosmic_app_list_config::AppListConfig`** (the dock/app-tray config) for the "Pin to panel" context-menu action.
 
@@ -55,16 +55,16 @@ The applet also reads and writes **`cosmic_app_list_config::AppListConfig`** (th
 
 - `model/power_action.rs` (`PowerAction` enum) and `power_options.rs` (async logind calls via `logind-zbus`: reboot, power_off, suspend, session lock; logout via `cosmic_session.rs` or GNOME `session_manager.rs`).
 - `Applet::perform_power_action` calls Lock/Suspend directly. Logout/Reboot/Shutdown first try `cosmic-osd <action>` (confirmation dialog), wrapped in `flatpak-spawn --host` under Flatpak, and fall back to the logind call. Results come back as `Message::Zbus`.
-- `dbus/` exposes the session bus service `com.championpeak87.CosmicExtClassicMenu` with method `TogglePopupSignal` → `Message::SuperKeyPressed`. This is how a keyboard shortcut opens the menu.
+- `dbus/` exposes the session bus service `io.github.shagovAlexei.CosmicExtClassicMenuPlus` with method `TogglePopupSignal` → `Message::SuperKeyPressed`. This is how a keyboard shortcut opens the menu.
 
 ### Icons & i18n
 
 - UI icons are bundled SVGs in `res/icons/bundled/`, embedded with `include_bytes!` and rendered `.symbolic(true)`. Applet-button icons are installed to `/usr/share/cosmic/<APPID>/applet-buttons/`.
-- Fluent localization: `applet/i18n/<lang>/cosmic_ext_classic_menu_applet.ftl` and `settings/i18n/<lang>/cosmic_ext_classic_menu_settings.ftl`, used via the `fl!("key")` macro (compile-time checked against `en`). New strings must be added to `en` at least. Add `ru` too for this fork.
+- Fluent localization: `applet/i18n/<lang>/cosmic_ext_classic_menu_plus_applet.ftl` and `settings/i18n/<lang>/cosmic_ext_classic_menu_plus_settings.ftl`, used via the `fl!("key")` macro (compile-time checked against `en`). New strings must be added to `en` at least. Add `ru` too for this fork.
 
 ### Packaging
 
-`justfile` + `res/packaging.just` (install paths), `flatpak/` manifest (with `cargo-sources.json`, which must be regenerated when dependencies change), `rpm/` spec, `package.nix`. APP_ID `com.championpeak87.cosmic-ext-classic-menu` is used across all of them and in the config path, so don't change it.
+`justfile` + `res/packaging.just` (install paths), `flatpak/` manifest (with `cargo-sources.json`, which must be regenerated when dependencies change), `rpm/` spec, `package.nix`. APP_ID `io.github.shagovAlexei.cosmic-ext-classic-menu-plus` is used across all of them and in the config path, so don't change it.
 
 ## Known issues (from README)
 

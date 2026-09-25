@@ -1,11 +1,11 @@
 [Desktop Entry]
-Name=Classic Menu
+Name=Classic Menu Plus
 Name[cs]=Klasické menu
 Exec=/app/launch-applet.sh
 Terminal=false
 Type=Application
 StartupNotify=true
-Icon=com.championpeak87.cosmic-ext-classic-menu
+Icon=io.github.shagovAlexei.cosmic-ext-classic-menu-plus
 Categories=COSMIC;
 Keywords=COSMIC
 MimeType=

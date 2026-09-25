@@ -1,6 +1,6 @@
-# План развития форка cosmic-ext-classic-menu
+# План развития форка cosmic-ext-classic-menu-plus
 
-Форк: `shagovAlexei/cosmic-ext-classic-menu` ← `championpeak87/cosmic-ext-classic-menu` (remote `upstream`).
+Форк: `shagovAlexei/cosmic-ext-classic-menu-plus` (переименован из `cosmic-ext-classic-menu`, свой APP_ID, конфиг и D-Bus имя) ← `championpeak87/cosmic-ext-classic-menu` (remote `upstream`).
 Дата: 2026-09-25. Архитектура проекта описана в `CLAUDE.md`.
 
 ## Цели
@@ -13,7 +13,7 @@
 
 ## Принципы
 
-- Изменения должны оставаться совместимыми с upstream при слиянии. `APP_ID` не меняется. Существующие поля конфига не трогаем, новые добавляются в `AppletConfig` с `Default`, `#[version = 1]` остаётся. Старые конфиги читаются без миграции: отсутствующие ключи получают значения по умолчанию.
+- Изменения должны оставаться совместимыми с upstream при слиянии. `APP_ID` теперь `io.github.shagovAlexei.cosmic-ext-classic-menu-plus` (см. ветку `chore/rename-plus`) и дальше не меняется. Существующие поля конфига не трогаем, новые добавляются в `AppletConfig` с `Default`, `#[version = 1]` остаётся. Старые конфиги читаются без миграции: отсутствующие ключи получают значения по умолчанию.
 - Одна функция — одна ветка `feat/<name>`, слияние в `master` форка. Гибернацию и выбор кнопок можно предложить upstream отдельными PR.
 - Быстрые действия доступны через ПКМ по приложению, полное управление — в приложении настроек.
 - Новые строки i18n добавляются как минимум в `en` и `ru`.
