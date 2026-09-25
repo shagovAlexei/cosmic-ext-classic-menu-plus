@@ -36,7 +36,7 @@ use crate::model::power_action::PowerAction;
 use crate::model::system_tool::SystemTool;
 use crate::model::user::User;
 
-pub const APP_ID: &str = "com.championpeak87.cosmic-ext-classic-menu-plus";
+pub const APP_ID: &str = "io.github.shagovAlexei.cosmic-ext-classic-menu-plus";
 
 /// This is the struct that represents your application.
 /// It is used to define the data that will be used by your application.

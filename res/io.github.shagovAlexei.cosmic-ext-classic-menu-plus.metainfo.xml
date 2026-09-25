@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <component type="desktop-application">
-  <id>com.championpeak87.cosmic-ext-classic-menu-plus</id>
+  <id>io.github.shagovAlexei.cosmic-ext-classic-menu-plus</id>
   <metadata_license>CC0-1.0</metadata_license>
   <project_license>GPL-3.0-only</project_license>
   <project_group>COSMIC</project_group>
@@ -135,9 +135,9 @@
     <p xml:lang="sk">Ideálny pre používateľov, ktorí chcú rýchle spúšťanie aplikácií, prispôsobenie menu alebo prehľad často používaných programov. Perfektný pre COSMIC™ Desktop.</p>
   </description>
   <launchable type="desktop-id">
-    com.championpeak87.cosmic-ext-classic-menu-plus.desktop
+    io.github.shagovAlexei.cosmic-ext-classic-menu-plus.desktop
   </launchable>
-  <icon type="stock">com.championpeak87.cosmic-ext-classic-menu-plus.svg</icon>
+  <icon type="stock">io.github.shagovAlexei.cosmic-ext-classic-menu-plus.svg</icon>
   <screenshots>
     <screenshot type="default">
       <image>

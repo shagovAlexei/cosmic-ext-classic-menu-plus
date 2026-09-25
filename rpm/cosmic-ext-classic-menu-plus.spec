@@ -30,10 +30,10 @@ just rootdir=%{buildroot} install
 %files
 %{_bindir}/%{name}-applet
 %{_bindir}/%{name}-settings
-%{_datadir}/applications/com.championpeak87.cosmic-ext-classic-menu-plus.desktop
-%{_datadir}/metainfo/com.championpeak87.cosmic-ext-classic-menu-plus.metainfo.xml
-%{_datadir}/icons/hicolor/scalable/apps/com.championpeak87.cosmic-ext-classic-menu-plus.svg
-%{_datadir}/cosmic/com.championpeak87.cosmic-ext-classic-menu-plus/applet-buttons/*
+%{_datadir}/applications/io.github.shagovAlexei.cosmic-ext-classic-menu-plus.desktop
+%{_datadir}/metainfo/io.github.shagovAlexei.cosmic-ext-classic-menu-plus.metainfo.xml
+%{_datadir}/icons/hicolor/scalable/apps/io.github.shagovAlexei.cosmic-ext-classic-menu-plus.svg
+%{_datadir}/cosmic/io.github.shagovAlexei.cosmic-ext-classic-menu-plus/applet-buttons/*
 
 %changelog
 * Mon Jun 12 2026 Kamil Lihan <k.lihan@outlook.com> 0.0.14-1

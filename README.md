@@ -1,6 +1,6 @@
 # cosmic-ext-classic-menu-plus
 
-A fork of [championpeak87/cosmic-ext-classic-menu](https://github.com/championpeak87/cosmic-ext-classic-menu) with extra features (hibernate button, planned: favorites, custom categories, appearance settings). It uses its own app id, config and D-Bus name, so it can be installed next to the original. See `docs/PLAN.md`.
+A fork of [championpeak87/cosmic-ext-classic-menu](https://github.io/github/shagovAlexei/cosmic-ext-classic-menu) with extra features (hibernate button, planned: favorites, custom categories, appearance settings). It uses its own app id, config and D-Bus name, so it can be installed next to the original. See `docs/PLAN.md`.
 
 Classic Menu is a customizable application launcher for the COSMIC™ desktop environment. It provides a classic style menu for launching applications, accessing system tools, and managing power options.
 
@@ -38,7 +38,7 @@ sudo just install
 
 ## Flatpak
 
-This project includes a Flatpak manifest at `flatpak/com.championpeak87.cosmic-ext-classic-menu-plus.json` and a `cargo-sources.json` helper. Use Flatpak and flatpak-builder to build, install, and run the app locally.
+This project includes a Flatpak manifest at `flatpak/io.github.shagovAlexei.cosmic-ext-classic-menu-plus.json` and a `cargo-sources.json` helper. Use Flatpak and flatpak-builder to build, install, and run the app locally.
 
 Prerequisites
 
@@ -52,27 +52,27 @@ From the repository root:
 
 ```bash
 # build and install into the current user
-flatpak-builder --install --user --force-clean build-dir flatpak/com.championpeak87.cosmic-ext-classic-menu-plus.json
+flatpak-builder --install --user --force-clean build-dir flatpak/io.github.shagovAlexei.cosmic-ext-classic-menu-plus.json
 ```
 
 Run without installing
 
 ```bash
 # build the project and run the app inside the build sandbox
-flatpak-builder --run build-dir flatpak/com.championpeak87.cosmic-ext-classic-menu-plus.json com.championpeak87.cosmic-ext-classic-menu-plus
+flatpak-builder --run build-dir flatpak/io.github.shagovAlexei.cosmic-ext-classic-menu-plus.json io.github.shagovAlexei.cosmic-ext-classic-menu-plus
 ```
 
 Create a reusable bundle and install
 
 ```bash
 # create a local flatpak repo and build the app into it
-flatpak-builder --repo=repo build-dir flatpak/com.championpeak87.cosmic-ext-classic-menu-plus.json --force-clean
+flatpak-builder --repo=repo build-dir flatpak/io.github.shagovAlexei.cosmic-ext-classic-menu-plus.json --force-clean
 
 # create a single-file bundle
-flatpak build-bundle repo com.championpeak87.cosmic-ext-classic-menu-plus.flatpak com.championpeak87.cosmic-ext-classic-menu-plus
+flatpak build-bundle repo io.github.shagovAlexei.cosmic-ext-classic-menu-plus.flatpak io.github.shagovAlexei.cosmic-ext-classic-menu-plus
 
 # install the bundle for the current user
-flatpak install --user com.championpeak87.cosmic-ext-classic-menu-plus.flatpak
+flatpak install --user io.github.shagovAlexei.cosmic-ext-classic-menu-plus.flatpak
 ```
 
 Notes & troubleshooting

@@ -32,7 +32,7 @@ Cargo workspace with two crates:
 
 ### Config is the contract between the two crates
 
-`applet/src/config.rs` holds `AppletConfig`, a `#[derive(CosmicConfigEntry)]` struct with `#[version = 1]` and id `com.championpeak87.cosmic-ext-classic-menu-plus`. It is stored by cosmic-config under `~/.config/cosmic/com.championpeak87.cosmic-ext-classic-menu-plus/v1/`, one file per field. The settings app writes fields with `config.write_entry(&AppletConfig::config_handler())`. The applet watches with `core.watch_config::<AppletConfig>` → `Message::UpdateConfig`, so changes apply live. The applet also writes to config itself (`recent_applications` launch counts). New fields need a `Default` value so existing installs keep loading. Missing keys fall back via `get_entry(...).unwrap_or_else(|(_, c)| c)`.
+`applet/src/config.rs` holds `AppletConfig`, a `#[derive(CosmicConfigEntry)]` struct with `#[version = 1]` and id `io.github.shagovAlexei.cosmic-ext-classic-menu-plus`. It is stored by cosmic-config under `~/.config/cosmic/io.github.shagovAlexei.cosmic-ext-classic-menu-plus/v1/`, one file per field. The settings app writes fields with `config.write_entry(&AppletConfig::config_handler())`. The applet watches with `core.watch_config::<AppletConfig>` → `Message::UpdateConfig`, so changes apply live. The applet also writes to config itself (`recent_applications` launch counts). New fields need a `Default` value so existing installs keep loading. Missing keys fall back via `get_entry(...).unwrap_or_else(|(_, c)| c)`.
 
 The applet also reads and writes **`cosmic_app_list_config::AppListConfig`** (the dock/app-tray config) for the "Pin to panel" context-menu action.
 
@@ -55,7 +55,7 @@ The applet also reads and writes **`cosmic_app_list_config::AppListConfig`** (th
 
 - `model/power_action.rs` (`PowerAction` enum) and `power_options.rs` (async logind calls via `logind-zbus`: reboot, power_off, suspend, session lock; logout via `cosmic_session.rs` or GNOME `session_manager.rs`).
 - `Applet::perform_power_action` calls Lock/Suspend directly. Logout/Reboot/Shutdown first try `cosmic-osd <action>` (confirmation dialog), wrapped in `flatpak-spawn --host` under Flatpak, and fall back to the logind call. Results come back as `Message::Zbus`.
-- `dbus/` exposes the session bus service `com.championpeak87.CosmicExtClassicMenuPlus` with method `TogglePopupSignal` → `Message::SuperKeyPressed`. This is how a keyboard shortcut opens the menu.
+- `dbus/` exposes the session bus service `io.github.shagovAlexei.CosmicExtClassicMenuPlus` with method `TogglePopupSignal` → `Message::SuperKeyPressed`. This is how a keyboard shortcut opens the menu.
 
 ### Icons & i18n
 
@@ -64,7 +64,7 @@ The applet also reads and writes **`cosmic_app_list_config::AppListConfig`** (th
 
 ### Packaging
 
-`justfile` + `res/packaging.just` (install paths), `flatpak/` manifest (with `cargo-sources.json`, which must be regenerated when dependencies change), `rpm/` spec, `package.nix`. APP_ID `com.championpeak87.cosmic-ext-classic-menu-plus` is used across all of them and in the config path, so don't change it.
+`justfile` + `res/packaging.just` (install paths), `flatpak/` manifest (with `cargo-sources.json`, which must be regenerated when dependencies change), `rpm/` spec, `package.nix`. APP_ID `io.github.shagovAlexei.cosmic-ext-classic-menu-plus` is used across all of them and in the config path, so don't change it.
 
 ## Known issues (from README)
 
