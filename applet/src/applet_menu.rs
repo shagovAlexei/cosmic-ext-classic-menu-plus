@@ -25,7 +25,7 @@ pub enum ContextMenuAction {
     LaunchApplicationWithAction(usize, usize),
     PinToPanel(usize, bool),
     ToggleFavorite(usize),
-    MoveToCategory(usize, usize),
+    ChooseCategory(usize),
     ResetCategory(usize),
     HideApp(usize),
 }
@@ -42,9 +42,7 @@ impl menu::Action for ContextMenuAction {
                 Message::PinToAppTrayIndex(*index, *favorites)
             }
             ContextMenuAction::ToggleFavorite(index) => Message::ToggleFavoriteAt(*index),
-            ContextMenuAction::MoveToCategory(app_index, target_index) => {
-                Message::MoveApplicationToCategory(*app_index, *target_index)
-            }
+            ContextMenuAction::ChooseCategory(index) => Message::ChooseCategoryFor(*index),
             ContextMenuAction::ResetCategory(index) => Message::ResetApplicationCategory(*index),
             ContextMenuAction::HideApp(index) => Message::HideApplicationAt(*index),
         }
@@ -167,22 +165,15 @@ impl AppletMenu {
         ];
 
         if !state.move_targets.is_empty() {
-            let move_items: Vec<menu::Item<ContextMenuAction, _>> = state
-                .move_targets
-                .iter()
-                .enumerate()
-                .map(|(target_index, category)| {
-                    menu::Item::CheckBox(
-                        category.get_display_name(),
-                        None,
-                        state.current_target == Some(target_index),
-                        ContextMenuAction::MoveToCategory(app_index, target_index),
-                    )
-                })
-                .collect();
-
+            // The category list is shown inside the main popup, not as a
+            // submenu: a submenu popup makes libcosmic destroy popups out of
+            // order, which crashes cosmic-comp.
             buttons.push(menu::Item::Divider);
-            buttons.push(menu::Item::Folder(fl!("move-to"), move_items));
+            buttons.push(menu::Item::Button(
+                fl!("move-to"),
+                None,
+                ContextMenuAction::ChooseCategory(app_index),
+            ));
             buttons.push(if state.current_target.is_some() {
                 menu::Item::Button(
                     fl!("restore-category"),
@@ -317,7 +308,56 @@ impl AppletMenu {
         VirtualizedAppList::view(applet)
     }
 
+    /// Replaces the categories pane while choosing where to move an app.
+    fn create_move_to_pane(applet: &Applet, app_index: usize) -> Element<'_, Message> {
+        let Spacing {
+            space_xxs, space_m, ..
+        } = cosmic::theme::active().cosmic().spacing;
+
+        let current_target = applet.available_applications.get(app_index).and_then(|app| {
+            crate::logic::categories::current_override(&app.id, &applet.config)
+        });
+
+        let mut items: Vec<Element<Message>> = vec![
+            cosmic::widget::button::custom(text(fl!("cancel")))
+                .on_press(Message::CancelChooseCategory)
+                .class(cosmic::theme::Button::AppletMenu)
+                .width(Length::Fill)
+                .into(),
+            text(fl!("move-to")).into(),
+        ];
+        items.extend(applet.move_targets.iter().enumerate().map(
+            |(target_index, category)| {
+                cosmic::widget::button::custom(
+                    row![
+                        container(AppletMenu::category_icon(category)).padding([0, space_m]),
+                        text(category.get_display_name()),
+                    ]
+                    .align_y(Alignment::Center),
+                )
+                .on_press(Message::MoveApplicationToCategory(app_index, target_index))
+                .class(if current_target == Some(category.key.as_ref()) {
+                    cosmic::theme::Button::Suggested
+                } else {
+                    cosmic::theme::Button::AppletMenu
+                })
+                .width(Length::Fill)
+                .into()
+            },
+        ));
+
+        cosmic::widget::scrollable(
+            cosmic::widget::column::with_children(items).spacing(space_xxs),
+        )
+        .height(Length::Fill)
+        .width(Length::FillPortion(3))
+        .into()
+    }
+
     fn create_categories_pane(applet: &Applet) -> Element<'_, Message> {
+        if let Some(app_index) = applet.moving_app {
+            return AppletMenu::create_move_to_pane(applet, app_index);
+        }
         let Spacing { space_m, .. } = cosmic::theme::active().cosmic().spacing;
 
         let mut categories_pane: Vec<Element<Message>> = applet

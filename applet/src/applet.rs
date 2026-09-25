@@ -67,8 +67,11 @@ pub struct Applet {
     pub app_list_config: AppListConfig,
     /// Cached context menus for applications (built once when apps are loaded)
     pub context_menus: std::collections::HashMap<String, Vec<cosmic::widget::menu::Tree<Message>>>,
-    /// Categories offered in the per-app "Move to..." submenu.
+    /// Categories offered in the per-app "Move to..." panel.
     pub move_targets: Vec<ApplicationCategory>,
+    /// Index of the app whose "Move to..." category panel is shown in place
+    /// of the categories pane.
+    pub moving_app: Option<usize>,
     /// Scroll offset for virtualization (pixels from top)
     pub scroll_offset: f32,
     /// Viewport height for virtualization and selection scroll behavior.
@@ -111,6 +114,8 @@ pub enum Message {
     LaunchApplicationWithActionAt(usize, usize),
     PinToAppTrayIndex(usize, bool),
     ToggleFavoriteAt(usize),
+    ChooseCategoryFor(usize),
+    CancelChooseCategory,
     MoveApplicationToCategory(usize, usize),
     ResetApplicationCategory(usize),
     HideApplicationAt(usize),
@@ -164,6 +169,7 @@ impl Application for Applet {
             popup: None,
             context_menus: std::collections::HashMap::new(),
             move_targets,
+            moving_app: None,
             scroll_offset: 0.0,
             scroll_viewport_height: 0.0,
             can_hibernate: false,
@@ -270,8 +276,14 @@ impl Application for Applet {
         match message {
             Message::TogglePopup(popup_type) => self.toggle_popup(popup_type),
             Message::PopupClosed(id) => self.close_popup(id),
-            Message::SearchFieldInput(input) => self.update_search_field(input),
-            Message::SearchCleared => self.clear_search(),
+            Message::SearchFieldInput(input) => {
+                self.moving_app = None;
+                self.update_search_field(input)
+            }
+            Message::SearchCleared => {
+                self.moving_app = None;
+                self.clear_search()
+            }
             Message::PowerOptionSelected(action) => self.perform_power_action(action),
             Message::HibernateSupport(available) => {
                 self.can_hibernate = available;
@@ -301,7 +313,10 @@ impl Application for Applet {
                 Task::none()
             }
             Message::ApplicationSelected(app) => self.launch_application(app, None),
-            Message::CategorySelected(category) => self.select_category(category),
+            Message::CategorySelected(category) => {
+                self.moving_app = None;
+                self.select_category(category)
+            }
             Message::LaunchTool(tool) => self.launch_tool(tool),
             Message::Zbus(result) => self.handle_zbus_result(result),
             Message::UpdateLoggedUser(user) => {
@@ -329,6 +344,7 @@ impl Application for Applet {
                 }
             }
             Message::UpdateAvailableApplications(items) => {
+                self.moving_app = None;
                 self.available_applications = items;
                 self.rebuild_context_menus();
 
@@ -397,6 +413,14 @@ impl Application for Applet {
                 self.save_config();
                 self.rebuild_app_context_menu(app_index, &app);
                 self.refresh_menu_view()
+            }
+            Message::ChooseCategoryFor(app_index) => {
+                self.moving_app = Some(app_index);
+                Task::none()
+            }
+            Message::CancelChooseCategory => {
+                self.moving_app = None;
+                Task::none()
             }
             Message::MoveApplicationToCategory(app_index, target_index) => {
                 let Some(app) = self.available_applications.get(app_index).cloned() else {
@@ -529,6 +553,7 @@ impl Applet {
             crate::logic::apps::get_apps_of_category(category.clone(), &self.config);
         self.selected_item_index = None;
         self.pending_confirmation = None;
+        self.moving_app = None;
 
         let mut tasks = vec![];
         self.popup_type = popup_type;
@@ -645,6 +670,7 @@ impl Applet {
         if self.popup.as_ref() == Some(&id) {
             self.popup = None;
             self.pending_confirmation = None;
+            self.moving_app = None;
         }
 
         Task::none()
