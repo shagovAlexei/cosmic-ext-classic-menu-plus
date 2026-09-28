@@ -1,7 +1,7 @@
 Name:           cosmic-ext-classic-menu-plus
 Version:        0.1.0
 Release:        1%{?dist}
-Summary:        Classic Menu Applet
+Summary:        Classic Menu Plus Applet
 
 License:        GPLv3
 URL:            https://github.com/shagovAlexei/cosmic-ext-classic-menu-plus
@@ -16,7 +16,9 @@ BuildRequires:  just
 Requires:       cosmic-osd
 
 %description
-Classic Menu is a Rust-based applet for COSMIC Desktop, providing an app menu launcher with apps divided into their respective categories.
+Classic Menu Plus is a Rust-based applet for COSMIC Desktop, providing an app menu launcher with apps divided into their respective categories.
+It is a fork of cosmic-ext-classic-menu (https://github.com/championpeak87/cosmic-ext-classic-menu)
+with favorites, custom categories, hibernate and appearance settings.
 
 %prep
 %autosetup
