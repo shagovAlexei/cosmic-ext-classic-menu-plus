@@ -143,7 +143,7 @@ impl cosmic::Application for AppModel {
             .icon(icon::from_name(Self::APP_ID))
             .version(env!("CARGO_PKG_VERSION"))
             .license("GPL-3.0-only")
-            .developers([("Kamil Lihan", "k.lihan@outlook.com")])
+            .developers([("Shagov Alexei", "shagov.alexei@gmail.com")])
             .links([
                 (
                     fl!("repository"),

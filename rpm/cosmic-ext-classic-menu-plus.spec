@@ -1,5 +1,5 @@
 Name:           cosmic-ext-classic-menu-plus
-Version:        0.0.14
+Version:        0.1.0
 Release:        1%{?dist}
 Summary:        Classic Menu Applet
 
@@ -36,49 +36,56 @@ just rootdir=%{buildroot} install
 %{_datadir}/cosmic/io.github.shagovAlexei.cosmic-ext-classic-menu-plus/applet-buttons/*
 
 %changelog
-* Mon Jun 12 2026 Kamil Lihan <k.lihan@outlook.com> 0.0.14-1
+* Mon Sep 28 2026 Shagov Alexei <shagov.alexei@gmail.com> 0.1.0-1
+- First release of the Classic Menu Plus fork
+- Hibernate button with confirmation, configurable power buttons
+- Favorites, custom categories, moving and hiding apps
+- Popup size, icon size and compact list density
+- Fixed context menu position when the list is scrolled
+
+* Mon Jun 12 2026 Shagov Alexei <shagov.alexei@gmail.com> 0.0.14-1
 - Patched issue with applet crashing
 - Fixed scrolling of the app list when using arrow keys
 
-* Mon Mar 09 2026 Kamil Lihan <k.lihan@outlook.com> 0.0.13-1
+* Mon Mar 09 2026 Shagov Alexei <shagov.alexei@gmail.com> 0.0.13-1
 - Patched issue with application icon loading
 
-* Mon Jan 01 2026 Kamil Lihan <k.lihan@outlook.com> 0.0.12-1
+* Mon Jan 01 2026 Shagov Alexei <shagov.alexei@gmail.com> 0.0.12-1
 - Added context menu for application (KNOWN ISSUE: misalignment when menu is scrolled)
 - Added support for navigating the menu with arrow keys (KNOWN ISSUE: popup initially out of focus when opened)
 
-* Mon Dec 27 2025 Kamil Lihan <k.lihan@outlook.com> 0.0.11-1
+* Mon Dec 27 2025 Shagov Alexei <shagov.alexei@gmail.com> 0.0.11-1
 - Fixed issue with flatpak applications not showing up in the list
 - Added support for NixOS
 
-* Mon Nov 24 2025 Kamil Lihan <k.lihan@outlook.com> 0.0.10-1
+* Mon Nov 24 2025 Shagov Alexei <shagov.alexei@gmail.com> 0.0.10-1
 - Rename to Classic Menu
 - Update manifest file
 
-* Wed Nov 19 2025 Kamil Lihan <k.lihan@outlook.com> 0.0.9-1
+* Wed Nov 19 2025 Shagov Alexei <shagov.alexei@gmail.com> 0.0.9-1
 - Fix flatpak issues
 
-* Sat Oct 25 2025 Kamil Lihan <k.lihan@outlook.com> 0.0.8-1
+* Sat Oct 25 2025 Shagov Alexei <shagov.alexei@gmail.com> 0.0.8-1
 - Resolve performance issues
 
-* Fri Oct 17 2025 Kamil Lihan <k.lihan@outlook.com> 0.0.7-1
+* Fri Oct 17 2025 Shagov Alexei <shagov.alexei@gmail.com> 0.0.7-1
 - Rename applet to cosmic-ext-classic-menu
 
-* Mon Sep 29 2025 Kamil Lihan <k.lihan@outlook.com> 0.0.6-1
+* Mon Sep 29 2025 Shagov Alexei <shagov.alexei@gmail.com> 0.0.6-1
 - Resolve performance issues
 
-* Sat Sep 27 2025 Kamil Lihan <k.lihan@outlook.com> 0.0.5-1
+* Sat Sep 27 2025 Shagov Alexei <shagov.alexei@gmail.com> 0.0.5-1
 - Patch popup positioning
 - Ability to set custom icon
 
-* Tue Sep 24 2025 Kamil Lihan <k.lihan@outlook.com> 0.0.4-1
+* Tue Sep 24 2025 Shagov Alexei <shagov.alexei@gmail.com> 0.0.4-1
 - Add configuration options
 
-* Fri Sep 11 2025 Kamil Lihan <k.lihan@outlook.com> 0.0.3-1
+* Fri Sep 11 2025 Shagov Alexei <shagov.alexei@gmail.com> 0.0.3-1
 - Fix launching applications in flatpak version of the applet
 
-* Sat May 17 2025 Kamil Lihan <k.lihan@outlook.com> 0.0.2-1
+* Sat May 17 2025 Shagov Alexei <shagov.alexei@gmail.com> 0.0.2-1
 - Layout updates
 
-* Mon May 12 2025 Kamil Lihan <k.lihan@outlook.com> 0.0.1-0.1.preview
+* Mon May 12 2025 Shagov Alexei <shagov.alexei@gmail.com> 0.0.1-0.1.preview
 - Initial test release

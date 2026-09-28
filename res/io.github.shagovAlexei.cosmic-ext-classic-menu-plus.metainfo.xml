@@ -4,14 +4,15 @@
   <metadata_license>CC0-1.0</metadata_license>
   <project_license>GPL-3.0-only</project_license>
   <project_group>COSMIC</project_group>
-  <developer_name>Kamil Lihan</developer_name>
-  <update_contact>k.lihan@outlook.com</update_contact>
+  <developer id="io.github.shagovalexei">
+    <name>Shagov Alexei</name>
+  </developer>
+  <update_contact>shagov.alexei@gmail.com</update_contact>
   <url type="homepage">https://github.com/shagovAlexei/cosmic-ext-classic-menu-plus</url>
   <url type="bugtracker">https://github.com/shagovAlexei/cosmic-ext-classic-menu-plus/issues</url>
   <url type="help">https://github.com/shagovAlexei/cosmic-ext-classic-menu-plus#readme</url>
-  <url type="contact">mailto:k.lihan@outlook.com</url>
+  <url type="vcs-browser">https://github.com/shagovAlexei/cosmic-ext-classic-menu-plus</url>
   <name>Classic Menu Plus</name>
-  <name xml:lang="cs">Klasické menu</name>
   <summary>A launcher applet for the COSMIC™ Desktop</summary>
   <summary xml:lang="cs">Applet spouštěče pro plochu COSMIC™</summary>
   <summary xml:lang="de">Ein Starter-Applet für den COSMIC™ Desktop</summary>
@@ -23,116 +24,30 @@
   <summary xml:lang="pl">Aplet uruchamiający dla pulpitu COSMIC™</summary>
   <summary xml:lang="sk">Spúšťací applet pre plochu COSMIC™</summary>
   <description>
-    <p>Classic Menu is a launcher applet for the COSMIC™ Desktop environment, providing quick access to applications, system functions, and settings. Features include:</p>
-    <p xml:lang="cs">Klasické menu je applet spouštěče pro prostředí COSMIC™, který nabízí rychlý přístup k aplikacím, systémovým funkcím a nastavením. Umožňuje:</p>
-    <p xml:lang="de">Classic Menu ist ein Starter-Applet für die COSMIC™ Desktop-Umgebung und bietet schnellen Zugriff auf Anwendungen, Systemfunktionen und Einstellungen. Funktionen:</p>
-    <p xml:lang="fr">Classic Menu est un applet de lancement pour l'environnement COSMIC™ Desktop, offrant un accès rapide aux applications, fonctions système et paramètres. Fonctionnalités :</p>
-    <p xml:lang="es">Classic Menu es un applet lanzador para el entorno COSMIC™ Desktop, que proporciona acceso rápido a aplicaciones, funciones del sistema y configuraciones. Características:</p>
-    <p xml:lang="ru">Classic Menu — это апплет-лаунчер для среды COSMIC™ Desktop, обеспечивающий быстрый доступ к приложениям, системным функциям и настройкам. Возможности:</p>
-    <p xml:lang="ja">Classic MenuはCOSMIC™ Desktop環境向けのランチャーアプレットで、アプリケーション、システム機能、設定への迅速なアクセスを提供します。主な機能：</p>
-    <p xml:lang="hu">A Classic Menu egy indító kisalkalmazás a COSMIC™ asztali környezethez, amely gyors hozzáférést biztosít az alkalmazásokhoz, rendszerfunkciókhoz és beállításokhoz. Jellemzők:</p>
-    <p xml:lang="pl">Classic Menu to aplet uruchamiający dla środowiska COSMIC™ Desktop, zapewniający szybki dostęp do aplikacji, funkcji systemowych i ustawień. Funkcje:</p>
-    <p xml:lang="sk">Classic Menu je spúšťací applet pre prostredie COSMIC™ Desktop, ktorý poskytuje rýchly prístup k aplikáciám, systémovým funkciám a nastaveniam. Funkcie:</p>
+    <p>Classic Menu Plus is a classic-style application launcher applet for the COSMIC™ Desktop. It is a fork of Classic Menu with extra features, and it can be installed alongside the original. Features:</p>
+    <p xml:lang="ru">Classic Menu Plus — апплет-лаунчер приложений в классическом стиле для рабочего стола COSMIC™. Это форк Classic Menu с дополнительными возможностями, его можно установить рядом с оригиналом. Возможности:</p>
     <ul>
-      <li>Browse and launch installed applications via a clear menu</li>
-      <li>Search for apps by name or category</li>
-      <li>Customize button appearance (icon, label, combination, auto style)</li>
-      <li>Quick access to recently used applications</li>
-      <li>Change menu and search field position</li>
-      <li>Multi-language support (localization)</li>
-      <li>Modern design and theme compatibility</li>
-    </ul>
-    <ul xml:lang="cs">
-      <li xml:lang="cs">Procházet a spouštět nainstalované aplikace pomocí přehledného menu</li>
-      <li xml:lang="cs">Vyhledávat aplikace podle názvu nebo kategorie</li>
-      <li xml:lang="cs">Přizpůsobit vzhled tlačítka (ikona, popisek, kombinace, automatický styl)</li>
-      <li xml:lang="cs">Rychlý přístup k naposledy použitým aplikacím</li>
-      <li xml:lang="cs">Možnost změny pozice menu a vyhledávacího pole</li>
-      <li xml:lang="cs">Podpora více jazyků (lokalizace)</li>
-      <li xml:lang="cs">Moderní design a kompatibilita s různými motivy</li>
-    </ul>
-    <ul xml:lang="de">
-      <li xml:lang="de">Installierte Anwendungen über ein übersichtliches Menü durchsuchen und starten</li>
-      <li xml:lang="de">Apps nach Name oder Kategorie suchen</li>
-      <li xml:lang="de">Button-Design anpassen (Icon, Text, Kombination, automatisch)</li>
-      <li xml:lang="de">Schneller Zugriff auf zuletzt verwendete Anwendungen</li>
-      <li xml:lang="de">Position des Menüs und Suchfelds ändern</li>
-      <li xml:lang="de">Mehrsprachige Unterstützung (Lokalisierung)</li>
-      <li xml:lang="de">Modernes Design und Theme-Kompatibilität</li>
-    </ul>
-    <ul xml:lang="fr">
-      <li xml:lang="fr">Parcourir et lancer les applications installées via un menu clair</li>
-      <li xml:lang="fr">Rechercher des applications par nom ou catégorie</li>
-      <li xml:lang="fr">Personnaliser l'apparence du bouton (icône, texte, combinaison, style automatique)</li>
-      <li xml:lang="fr">Accès rapide aux applications récemment utilisées</li>
-      <li xml:lang="fr">Changer la position du menu et du champ de recherche</li>
-      <li xml:lang="fr">Support multilingue (localisation)</li>
-      <li xml:lang="fr">Design moderne et compatibilité avec les thèmes</li>
-    </ul>
-    <ul xml:lang="es">
-      <li xml:lang="es">Explora y lanza aplicaciones instaladas mediante un menú claro</li>
-      <li xml:lang="es">Busca aplicaciones por nombre o categoría</li>
-      <li xml:lang="es">Personaliza la apariencia del botón (icono, etiqueta, combinación, estilo automático)</li>
-      <li xml:lang="es">Acceso rápido a aplicaciones usadas recientemente</li>
-      <li xml:lang="es">Cambia la posición del menú y del campo de búsqueda</li>
-      <li xml:lang="es">Soporte multilingüe (localización)</li>
-      <li xml:lang="es">Diseño moderno y compatibilidad con temas</li>
+      <li>Browse and launch installed applications grouped by category</li>
+      <li>Fuzzy search by name, generic name or description, tolerant to typos</li>
+      <li>Favorites: pin apps from their right-click menu, shown first when the menu opens</li>
+      <li>Custom categories with your own name and icon; move apps between categories, hide apps or categories, reorder categories</li>
+      <li>Recently used applications</li>
+      <li>Power buttons: log out, suspend, hibernate with confirmation, lock, restart, shut down; choose which ones to show and in what order</li>
+      <li>Appearance: popup width and height, application icon size, compact or normal list</li>
+      <li>Panel button as an icon, a label or both; menu and search field position</li>
+      <li>A settings app for all options, applied live</li>
     </ul>
     <ul xml:lang="ru">
-      <li xml:lang="ru">Просмотр и запуск установленных приложений через удобное меню</li>
-      <li xml:lang="ru">Поиск приложений по названию или категории</li>
-      <li xml:lang="ru">Настройка внешнего вида кнопки (иконка, подпись, комбинация, авто)</li>
-      <li xml:lang="ru">Быстрый доступ к недавно использованным приложениям</li>
-      <li xml:lang="ru">Изменение положения меню и поля поиска</li>
-      <li xml:lang="ru">Многоязычная поддержка (локализация)</li>
-      <li xml:lang="ru">Современный дизайн и совместимость с темами</li>
+      <li xml:lang="ru">Просмотр и запуск установленных приложений по категориям</li>
+      <li xml:lang="ru">Нечёткий поиск по названию, общему имени или описанию с учётом опечаток</li>
+      <li xml:lang="ru">Избранное: закрепление приложений через меню по правому клику, показывается первым при открытии меню</li>
+      <li xml:lang="ru">Свои категории с названием и иконкой; перенос приложений между категориями, скрытие приложений и категорий, порядок категорий</li>
+      <li xml:lang="ru">Недавно использованные приложения</li>
+      <li xml:lang="ru">Кнопки питания: выход, сон, гибернация с подтверждением, блокировка, перезагрузка, выключение; выбор кнопок и их порядка</li>
+      <li xml:lang="ru">Внешний вид: ширина и высота меню, размер иконок приложений, обычный или компактный список</li>
+      <li xml:lang="ru">Кнопка на панели в виде иконки, подписи или обоих; положение меню и поля поиска</li>
+      <li xml:lang="ru">Приложение настроек для всех параметров, изменения применяются сразу</li>
     </ul>
-    <ul xml:lang="ja">
-      <li xml:lang="ja">分かりやすいメニューでインストール済みアプリを閲覧・起動</li>
-      <li xml:lang="ja">名前やカテゴリでアプリを検索</li>
-      <li xml:lang="ja">ボタンの外観をカスタマイズ（アイコン、ラベル、組み合わせ、自動スタイル）</li>
-      <li xml:lang="ja">最近使用したアプリへの素早いアクセス</li>
-      <li xml:lang="ja">メニューや検索フィールドの位置を変更</li>
-      <li xml:lang="ja">多言語対応（ローカライズ）</li>
-      <li xml:lang="ja">モダンなデザインとテーマ互換性</li>
-    </ul>
-    <ul xml:lang="hu">
-      <li xml:lang="hu">Telepített alkalmazások böngészése és indítása egy átlátható menün keresztül</li>
-      <li xml:lang="hu">Alkalmazások keresése név vagy kategória alapján</li>
-      <li xml:lang="hu">Gomb megjelenésének testreszabása (ikon, címke, kombináció, automatikus stílus)</li>
-      <li xml:lang="hu">Gyors hozzáférés a legutóbb használt alkalmazásokhoz</li>
-      <li xml:lang="hu">Menü és keresőmező pozíciójának megváltoztatása</li>
-      <li xml:lang="hu">Többnyelvű támogatás (honosítás)</li>
-      <li xml:lang="hu">Modern design és téma kompatibilitás</li>
-    </ul>
-    <ul xml:lang="pl">
-      <li xml:lang="pl">Przeglądanie i uruchamianie zainstalowanych aplikacji za pomocą przejrzystego menu</li>
-      <li xml:lang="pl">Wyszukiwanie aplikacji według nazwy lub kategorii</li>
-      <li xml:lang="pl">Dostosowanie wyglądu przycisku (ikona, etykieta, kombinacja, styl automatyczny)</li>
-      <li xml:lang="pl">Szybki dostęp do ostatnio używanych aplikacji</li>
-      <li xml:lang="pl">Zmiana pozycji menu i pola wyszukiwania</li>
-      <li xml:lang="pl">Obsługa wielu języków (lokalizacja)</li>
-      <li xml:lang="pl">Nowoczesny design i kompatybilność z motywami</li>
-    </ul>
-    <ul xml:lang="sk">
-      <li xml:lang="sk">Prechádzanie a spúšťanie nainštalovaných aplikácií cez prehľadné menu</li>
-      <li xml:lang="sk">Vyhľadávanie aplikácií podľa názvu alebo kategórie</li>
-      <li xml:lang="sk">Prispôsobenie vzhľadu tlačidla (ikona, popis, kombinácia, automatický štýl)</li>
-      <li xml:lang="sk">Rýchly prístup k naposledy použitým aplikáciám</li>
-      <li xml:lang="sk">Možnosť zmeny pozície menu a vyhľadávacieho poľa</li>
-      <li xml:lang="sk">Podpora viacerých jazykov (lokalizácia)</li>
-      <li xml:lang="sk">Moderný dizajn a kompatibilita s témami</li>
-    </ul>
-    <p>Ideal for users who want fast app launching, menu customization, or an overview of frequently used programs. Perfect for COSMIC™ Desktop.</p>
-    <p xml:lang="cs">Applet je vhodný pro uživatele, kteří chtějí rychle spouštět aplikace, upravovat vzhled menu, nebo mít přehled o svých nejčastěji používaných programech. Je ideální pro desktopové prostředí COSMIC.</p>
-    <p xml:lang="de">Ideal für Nutzer, die Anwendungen schnell starten, das Menü anpassen oder einen Überblick über häufig genutzte Programme haben möchten. Perfekt für COSMIC Desktop.</p>
-    <p xml:lang="fr">Idéal pour les utilisateurs souhaitant lancer rapidement des applications, personnaliser le menu ou avoir un aperçu des programmes fréquemment utilisés. Parfait pour COSMIC Desktop.</p>
-    <p xml:lang="es">Ideal para usuarios que desean lanzar aplicaciones rápidamente, personalizar el menú o tener una visión general de los programas más utilizados. Perfecto para COSMIC Desktop.</p>
-    <p xml:lang="ru">Идеально подходит для пользователей, которым нужен быстрый запуск приложений, настройка меню или обзор часто используемых программ. Отлично подходит для COSMIC Desktop.</p>
-    <p xml:lang="ja">アプリの素早い起動やメニューのカスタマイズ、よく使うプログラムの一覧が欲しいユーザーに最適です。COSMIC Desktopに最適ですが、単体ランチャーとしても利用可能です。</p>
-    <p xml:lang="hu">Ideális azoknak a felhasználóknak, akik gyors alkalmazásindítást, menü testreszabást vagy áttekintést szeretnének a gyakran használt programokról. Tökéletes a COSMIC™ Desktophoz.</p>
-    <p xml:lang="pl">Idealny dla użytkowników, którzy chcą szybkiego uruchamiania aplikacji, dostosowania menu lub przeglądu często używanych programów. Doskonały dla COSMIC™ Desktop.</p>
-    <p xml:lang="sk">Ideálny pre používateľov, ktorí chcú rýchle spúšťanie aplikácií, prispôsobenie menu alebo prehľad často používaných programov. Perfektný pre COSMIC™ Desktop.</p>
   </description>
   <launchable type="desktop-id">
     io.github.shagovAlexei.cosmic-ext-classic-menu-plus.desktop
@@ -141,19 +56,20 @@
   <screenshots>
     <screenshot type="default">
       <image>
-        https://raw.githubusercontent.com/shagovAlexei/cosmic-ext-classic-menu-plus/refs/heads/master/screenshots/cosmic-ext-classic-menu-applet.png
+        https://raw.githubusercontent.com/shagovAlexei/cosmic-ext-classic-menu-plus/refs/tags/0.1.0/screenshots/cosmic-ext-classic-menu-applet.png
       </image>
-      <caption>Main menu screenshot</caption>
-      <caption xml:lang="cs">Hlavní menu</caption>
-     </screenshot>
-     <screenshot type="default">
+      <caption>Main menu with favorites</caption>
+      <caption xml:lang="ru">Главное меню с избранным</caption>
+    </screenshot>
+    <screenshot>
       <image>
-        https://raw.githubusercontent.com/shagovAlexei/cosmic-ext-classic-menu-plus/refs/heads/master/screenshots/cosmic-ext-classic-menu-settings.png
+        https://raw.githubusercontent.com/shagovAlexei/cosmic-ext-classic-menu-plus/refs/tags/0.1.0/screenshots/cosmic-ext-classic-menu-settings.png
       </image>
-      <caption>Applet settings</caption>
-      <caption xml:lang="cs">Nastavení appletu</caption>
-     </screenshot>
+      <caption>Settings app</caption>
+      <caption xml:lang="ru">Приложение настроек</caption>
+    </screenshot>
   </screenshots>
+  <content_rating type="oars-1.1" />
   <provides>
     <id>com.system76.CosmicApplet</id>
     <binary>cosmic-ext-classic-menu-plus-applet</binary>
@@ -162,13 +78,24 @@
   <categories>
     <category>Utility</category>
     <category>System</category>
-    <category>Launcher</category>
-    <category>Desktop</category>
   </categories>
   <releases>
+    <release version="0.1.0" date="2026-09-28">
+      <description>
+        <p>First release of the Classic Menu Plus fork.</p>
+        <ul>
+          <li>Hibernate button with a confirmation step in the menu</li>
+          <li>Choose which power buttons to show and in what order</li>
+          <li>Favorites category, pinned from the app right-click menu</li>
+          <li>Custom categories; move apps between categories, hide apps and categories, reorder categories</li>
+          <li>Popup size, application icon size and compact list density</li>
+          <li>New settings app layout with a page per section</li>
+          <li>Fixed: app context menu appeared in the wrong place when the list was scrolled</li>
+        </ul>
+      </description>
+    </release>
     <release version="0.0.14" date="2026-06-12">
       <description>
-        <h1>What's changed</h1>
         <ul>
           <li>Patched issue with applet crashing</li>
           <li>Fixed scrolling of the app list when using arrow keys</li>
@@ -177,7 +104,6 @@
     </release>
     <release version="0.0.13" date="2026-03-09">
       <description>
-        <h1>What's changed</h1>
         <ul>
           <li>Patched issue with application icon loading</li>
         </ul>
@@ -185,13 +111,12 @@
     </release>
     <release version="0.0.12" date="2026-02-26">
       <description>
-        <h1>What's changed</h1>
         <ul>
           <li>Added context menu for applications</li>
           <li>List is navigable with arrow keys</li>
           <li>Resolved issue with some of the applications icons not being displayed properly</li>
         </ul>
-        <h2>Known issues</h2>
+        <p>Known issues:</p>
         <ul>
           <li>Context menu is misaligned when the list is scrolled</li>
           <li>Popup is not in focus when opened, search field and arrow key navigation may not work properly unless the popup is in focus by clicking on it</li>
@@ -200,7 +125,6 @@
     </release>
     <release version="0.0.11" date="2025-12-27">
       <description>
-        <h1>What's changed</h1>
         <ul>
           <li>Fixed issue with flatpak applications not showing up in the list</li>
           <li>Added support for NixOS</li>
@@ -209,7 +133,6 @@
     </release>
     <release version="0.0.10" date="2025-11-24">
       <description>
-        <h1>What's changed</h1>
         <ul>
           <li>Update applet name</li>
           <li>Fixed applet manifest file</li>
@@ -218,7 +141,6 @@
     </release>
     <release version="0.0.9" date="2025-11-19">
       <description>
-        <h1>What's changed</h1>
         <ul>
           <li>Fix flatpak issues</li>
         </ul>
@@ -226,7 +148,6 @@
     </release>
     <release version="0.0.8" date="2025-10-25">
       <description>
-        <h1>What's changed</h1>
         <ul>
           <li>Resolve performance issues</li>
         </ul>
@@ -234,7 +155,6 @@
     </release>
     <release version="0.0.7" date="2025-10-17">
       <description>
-        <h1>What's changed</h1>
         <ul>
           <li>Rename applet to cosmic-ext-classic-menu</li>
         </ul>
@@ -242,7 +162,6 @@
     </release>
     <release version="0.0.6" date="2025-09-29">
       <description>
-        <h1>What's changed</h1>
         <ul>
           <li>Resolve performance issues</li>
         </ul>
@@ -250,7 +169,6 @@
     </release>
     <release version="0.0.5" date="2025-09-27">
       <description>
-        <h1>What's changed</h1>
         <ul>
           <li>Patch popup positioning</li>
           <li>Ability to set custom icon</li>
@@ -259,7 +177,6 @@
     </release>
     <release version="0.0.4" date="2025-09-24">
       <description>
-        <h1>What's changed</h1>
         <ul>
           <li>Add configuration options</li>
         </ul>
@@ -267,7 +184,6 @@
     </release>
     <release version="0.0.3" date="2025-09-11">
       <description>
-        <h1>What's changed</h1>
         <ul>
           <li>Fix launching applications in flatpak version of the applet</li>
         </ul>
@@ -275,7 +191,6 @@
     </release>
     <release version="0.0.2" date="2025-05-17">
       <description>
-        <h1>What's changed</h1>
         <ul>
           <li>Layout updates</li>
         </ul>

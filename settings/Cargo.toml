@@ -1,8 +1,8 @@
 [package]
 name = "cosmic-ext-classic-menu-plus-settings"
-version = "0.0.14"
+version = "0.1.0"
 edition = "2024"
-authors = ["Kamil Lihan <k.lihan@outlook.com>"]
+authors = ["Shagov Alexei <shagov.alexei@gmail.com>"]
 license = "GPL-3.0-only"
 description = "A launcher applet for COSMIC Desktop"
 repository = "https://github.com/shagovAlexei/cosmic-ext-classic-menu-plus"
