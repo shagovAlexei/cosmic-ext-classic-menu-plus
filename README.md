@@ -1,6 +1,6 @@
 # cosmic-ext-classic-menu-plus
 
-A fork of [championpeak87/cosmic-ext-classic-menu](https://github.io/github/shagovAlexei/cosmic-ext-classic-menu) with extra features (hibernate button, planned: favorites, custom categories, appearance settings). It uses its own app id, config and D-Bus name, so it can be installed next to the original. See `docs/PLAN.md`.
+A fork of [championpeak87/cosmic-ext-classic-menu](https://github.io/github/shagovAlexei/cosmic-ext-classic-menu) with extra features: favorites, custom categories, hibernate, configurable power buttons, and appearance settings (popup size, icon size, list density). It uses its own app id, config and D-Bus name, so it can be installed next to the original. See `docs/PLAN.md`.
 
 Classic Menu is a customizable application launcher for the COSMIC™ desktop environment. It provides a classic style menu for launching applications, accessing system tools, and managing power options.
 
@@ -10,14 +10,16 @@ Classic Menu is a customizable application launcher for the COSMIC™ desktop en
 
 - Classic-style application menu
 - Search functionality with fuzzy matching and typo tolerance
-- Categorized application list
+- Favorites: pin apps from their right-click menu, shown first and open by default once you have any
+- Categories: standard freedesktop categories plus your own (custom name and icon), move apps between categories or hide them from the menu, reorder and hide categories
 - Recently used applications
-- Power options (shutdown, restart, logout, etc.)
+- Power options: logout, suspend, hibernate, lock, reboot, shutdown, with a confirmation step for hibernate; pick which buttons to show and in what order
+- Appearance settings: popup width/height, application icon size, compact/normal list density
 - System tools (settings, system monitor, disk management)
+- A standalone settings app (`cosmic-ext-classic-menu-plus-settings`) for everything above — see `screenshots/cosmic-ext-classic-menu-settings.png`
 
 ## Known issues
 
-- Context menu is misaligned when the list is scrolled
 - Popup is not in focus when opened, search field and arrow key navigation may not work properly unless the popup is in focus by clicking on it
 
 ## Installation 
