@@ -1,7 +1,5 @@
 # cosmic-ext-classic-menu-plus
 
-A fork of [championpeak87/cosmic-ext-classic-menu](https://github.io/github/shagovAlexei/cosmic-ext-classic-menu) with extra features: favorites, custom categories, hibernate, configurable power buttons, and appearance settings (popup size, icon size, list density). It uses its own app id, config and D-Bus name, so it can be installed next to the original. See `docs/PLAN.md`.
-
 Classic Menu is a customizable application launcher for the COSMIC™ desktop environment. It provides a classic style menu for launching applications, accessing system tools, and managing power options.
 
 ![Classic Menu Screenshot](screenshots/cosmic-ext-classic-menu-applet.png)
@@ -131,4 +129,8 @@ A [justfile](./justfile) is included with common recipes used by other COSMIC pr
 ## License
 
 Code is distributed with the [GPL-3.0-only license][./LICENSE]
+
+---
+
+A fork of [championpeak87/cosmic-ext-classic-menu](https://github.io/github/shagovAlexei/cosmic-ext-classic-menu) with extra features: favorites, custom categories, hibernate, configurable power buttons, and appearance settings (popup size, icon size, list density). It uses its own app id, config and D-Bus name, so it can be installed next to the original. See `docs/PLAN.md`.
 
