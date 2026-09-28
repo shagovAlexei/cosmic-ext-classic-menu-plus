@@ -132,5 +132,5 @@ Code is distributed with the [GPL-3.0-only license][./LICENSE]
 
 ---
 
-A fork of [championpeak87/cosmic-ext-classic-menu](https://github.io/github/shagovAlexei/cosmic-ext-classic-menu) with extra features: favorites, custom categories, hibernate, configurable power buttons, and appearance settings (popup size, icon size, list density). It uses its own app id, config and D-Bus name, so it can be installed next to the original. See `docs/PLAN.md`.
+A fork of [championpeak87/cosmic-ext-classic-menu](https://github.com/championpeak87/cosmic-ext-classic-menu) with extra features: favorites, custom categories, hibernate, configurable power buttons, and appearance settings (popup size, icon size, list density). It uses its own app id, config and D-Bus name, so it can be installed next to the original.
 

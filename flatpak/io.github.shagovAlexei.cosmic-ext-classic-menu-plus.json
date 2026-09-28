@@ -56,7 +56,8 @@
       "sources": [
         {
           "type": "dir",
-          "path": ".."
+          "path": "..",
+          "skip": ["target", ".flatpak-builder", "build-dir", "repo"]
         },
         "./cargo-sources.json"
       ]

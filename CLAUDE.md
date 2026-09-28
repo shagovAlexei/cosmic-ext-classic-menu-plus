@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project
 
-Classic-style application launcher applet for the COSMIC desktop, written in Rust on top of `libcosmic` (iced fork). This repo is a fork of `championpeak87/cosmic-ext-classic-menu` (remote `upstream`), renamed to `cosmic-ext-classic-menu-plus` so it can be installed alongside the original; our remote is `origin` (`shagovAlexei/cosmic-ext-classic-menu-plus`). The rename touched the crate/binary names, `APP_ID`, config path, D-Bus name and packaging files, so merging `upstream` will conflict there: resolve by keeping the `-plus` names. Keep changes merge-friendly with upstream: additive config fields, no gratuitous reformatting of upstream code. Fork roadmap and TODO list: `docs/PLAN.md`.
+Classic-style application launcher applet for the COSMIC desktop, written in Rust on top of `libcosmic` (iced fork). This repo is a fork of `championpeak87/cosmic-ext-classic-menu` (remote `upstream`), renamed to `cosmic-ext-classic-menu-plus` so it can be installed alongside the original; our remote is `origin` (`shagovAlexei/cosmic-ext-classic-menu-plus`). The rename touched the crate/binary names, `APP_ID`, config path, D-Bus name and packaging files, so merging `upstream` will conflict there: resolve by keeping the `-plus` names. Keep changes merge-friendly with upstream: additive config fields, no gratuitous reformatting of upstream code. Fork roadmap and TODO list: `docs/PLAN.md` (local only: `docs/` and `.claude/` are git-ignored and not pushed).
 
 ## Commands
 

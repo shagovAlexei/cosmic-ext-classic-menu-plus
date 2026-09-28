@@ -11,18 +11,19 @@
 
 rustPlatform.buildRustPackage rec {
   pname = "cosmic-ext-classic-menu-plus";
-  version = "0.0.11"; # Update this based on the latest release or tag
+  version = "0.1.0";
 
   src = fetchFromGitHub {
-    owner = "championpeak87";
-    repo = "cosmic-classic-menu";
-    rev = "master"; # Or a specific tag like "v0.1.0"
-    hash = "sha256-xiM9O37lZEv8Jfc3cBp31zKRXmUa+Xy9oipjAeFdPjE="; # See note below
+    owner = "shagovAlexei";
+    repo = "cosmic-ext-classic-menu-plus";
+    rev = version;
+    # Replace with the hash Nix reports on the first build
+    hash = lib.fakeHash;
   };
 
   # This is required for Rust projects that don't have a vendor folder
   # You can use 'lib.fakeHash' initially to get the correct hash from the error message
-  cargoHash = "sha256-xflF6v6pDtEHydC5YM+mHBjf+GFgDXgIzo4ntPQac7w=";
+  cargoHash = lib.fakeHash;
 
   nativeBuildInputs = [
     pkg-config
