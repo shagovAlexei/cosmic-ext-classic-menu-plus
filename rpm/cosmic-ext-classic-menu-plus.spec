@@ -1,5 +1,5 @@
 Name:           cosmic-ext-classic-menu-plus
-Version:        0.1.0
+Version:        0.1.1
 Release:        1%{?dist}
 Summary:        Classic Menu Plus Applet
 
@@ -38,6 +38,9 @@ just rootdir=%{buildroot} install
 %{_datadir}/cosmic/io.github.shagovAlexei.cosmic-ext-classic-menu-plus/applet-buttons/*
 
 %changelog
+* Wed Sep 30 2026 Shagov Alexei <shagov.alexei@gmail.com> 0.1.1-1
+- New application icon
+
 * Mon Sep 28 2026 Shagov Alexei <shagov.alexei@gmail.com> 0.1.0-1
 - First release of the Classic Menu Plus fork
 - Hibernate button with confirmation, configurable power buttons

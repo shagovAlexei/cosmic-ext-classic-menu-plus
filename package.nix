@@ -11,7 +11,7 @@
 
 rustPlatform.buildRustPackage rec {
   pname = "cosmic-ext-classic-menu-plus";
-  version = "0.1.0";
+  version = "0.1.1";
 
   src = fetchFromGitHub {
     owner = "shagovAlexei";

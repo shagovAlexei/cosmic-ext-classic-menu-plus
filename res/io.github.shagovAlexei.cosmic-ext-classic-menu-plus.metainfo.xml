@@ -80,6 +80,11 @@
     <category>System</category>
   </categories>
   <releases>
+    <release version="0.1.1" date="2026-09-30">
+      <description>
+        <p>New application icon.</p>
+      </description>
+    </release>
     <release version="0.1.0" date="2026-09-28">
       <description>
         <p>First release of the Classic Menu Plus fork.</p>
