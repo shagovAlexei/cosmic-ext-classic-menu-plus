@@ -80,6 +80,11 @@
     <category>System</category>
   </categories>
   <releases>
+    <release version="0.1.4" date="2026-10-15">
+      <description>
+        <p>Built-in categories can be renamed in the settings. Fixed Favorites showing only the first four apps until the list was scrolled.</p>
+      </description>
+    </release>
     <release version="0.1.3" date="2026-10-14">
       <description>
         <p>Settings button in the menu header; clicking the user name opens the COSMIC user settings.</p>

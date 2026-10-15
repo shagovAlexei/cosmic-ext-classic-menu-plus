@@ -46,7 +46,11 @@ impl AppModel {
                 .width(Length::Fill)
                 .into()
             } else {
-                text::body(category.get_display_name())
+                // Placeholder shows the built-in name; clearing the field restores it.
+                let name = self.config.category_names.get(&key).map_or("", String::as_str);
+                let rename_key = key.clone();
+                cosmic::widget::text_input(category.get_display_name(), name)
+                    .on_input(move |value| Message::BuiltinCategoryRenamed(rename_key.clone(), value))
                     .width(Length::Fill)
                     .into()
             };
@@ -218,6 +222,9 @@ impl AppModel {
     /// translated name, a custom category's name, or the raw key if it was
     /// since deleted.
     fn category_display_name(key: &str, app: &AppModel) -> String {
+        if let Some(name) = app.config.category_names.get(key).filter(|n| !n.trim().is_empty()) {
+            return name.clone();
+        }
         if let Some(category) = ApplicationCategory::STANDARD
             .iter()
             .find(|c| c.mime_name == key)

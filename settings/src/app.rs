@@ -89,6 +89,8 @@ pub enum Message {
     CategoryMoved(String, MoveDirection),
     CategoryVisibilityToggled(String),
     CategoryRenamed(String, String),
+    /// A standard or permanent category's key and its new name.
+    BuiltinCategoryRenamed(String, String),
     OpenCategoryIconPicker(String),
     CategoryIconSelected(String, String),
     CategoryAdded,
@@ -597,6 +599,15 @@ impl cosmic::Application for AppModel {
                     .find(|c| c.id == id)
                 {
                     category.name = name;
+                }
+                self.write_config("category name");
+                Task::none()
+            }
+            Message::BuiltinCategoryRenamed(key, name) => {
+                if name.trim().is_empty() {
+                    self.config.category_names.remove(&key);
+                } else {
+                    self.config.category_names.insert(key, name);
                 }
                 self.write_config("category name");
                 Task::none()

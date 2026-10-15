@@ -1,5 +1,5 @@
 Name:           cosmic-ext-classic-menu-plus
-Version:        0.1.3
+Version:        0.1.4
 Release:        1%{?dist}
 Summary:        Classic Menu Plus Applet
 
@@ -38,6 +38,10 @@ just rootdir=%{buildroot} install
 %{_datadir}/cosmic/io.github.shagovAlexei.cosmic-ext-classic-menu-plus/applet-buttons/*
 
 %changelog
+* Thu Oct 15 2026 Shagov Alexei <shagov.alexei@gmail.com> 0.1.4-1
+- Built-in categories can be renamed in the settings
+- Fixed Favorites showing only the first four apps until the list was scrolled
+
 * Wed Oct 14 2026 Shagov Alexei <shagov.alexei@gmail.com> 0.1.3-1
 - Settings button in the menu header, the user name opens COSMIC user settings
 
