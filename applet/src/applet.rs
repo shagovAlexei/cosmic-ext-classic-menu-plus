@@ -330,7 +330,8 @@ impl Application for Applet {
                     || self.config.app_category_overrides != config.app_category_overrides
                     || self.config.hidden_apps != config.hidden_apps
                     || self.config.hidden_categories != config.hidden_categories
-                    || self.config.category_order != config.category_order;
+                    || self.config.category_order != config.category_order
+                    || self.config.category_names != config.category_names;
                 self.config = config;
 
                 if pinned_changed || categories_changed {
@@ -528,6 +529,19 @@ impl Applet {
             spacing.space_l,
             spacing.space_xl,
         )
+    }
+
+    /// Height of the app list viewport for deciding which rows to render. It is
+    /// only reported by `on_scroll`, so before the first scroll fall back to the
+    /// popup height, which bounds it; otherwise a list that fits without
+    /// scrolling would render only a few rows.
+    pub fn list_viewport_height(&self) -> f32 {
+        if self.scroll_viewport_height > 0.0 {
+            self.scroll_viewport_height
+        } else {
+            crate::model::appearance::clamp_popup_height(self.config.popup_height) as f32
+        }
+        .max(self.list_item_height())
     }
 
     pub fn handle_event(&mut self, event: Event) -> Task<Message> {

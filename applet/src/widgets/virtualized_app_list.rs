@@ -41,7 +41,7 @@ impl VirtualizedAppList {
 
         // Calculate which items should be rendered based on scroll position
         let visible_start = (scroll_offset / item_height).floor() as usize;
-        let viewport_height = applet.scroll_viewport_height.max(item_height);
+        let viewport_height = applet.list_viewport_height();
         let visible_count = ((viewport_height / item_height).ceil() as usize) + 1;
 
         // Add buffer for smooth scrolling

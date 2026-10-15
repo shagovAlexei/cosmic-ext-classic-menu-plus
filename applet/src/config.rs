@@ -38,6 +38,9 @@ pub struct AppletConfig {
     pub hidden_categories: Vec<String>,
     /// Category keys in display order; unlisted ones follow in default order.
     pub category_order: Vec<String>,
+    /// Category key -> name replacing the built-in one (standard and
+    /// permanent categories; custom ones keep their name in `custom_categories`).
+    pub category_names: BTreeMap<String, String>,
 }
 
 impl Default for AppletConfig {
@@ -65,6 +68,7 @@ impl Default for AppletConfig {
             hidden_apps: vec![],
             hidden_categories: vec![],
             category_order: vec![],
+            category_names: BTreeMap::new(),
         }
     }
 }

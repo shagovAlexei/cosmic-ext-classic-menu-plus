@@ -8,7 +8,9 @@ use std::collections::HashSet;
 use std::sync::Arc;
 
 use crate::config::AppletConfig;
-use crate::model::application_category::{ApplicationCategory, CategoryKind, CustomCategory};
+use crate::model::application_category::{
+    ApplicationCategory, CategoryKind, CategoryName, CustomCategory,
+};
 use crate::model::application_entry::ApplicationEntry;
 use crate::model::favorites::resolve_favorites;
 use crate::model::power_action::MoveDirection;
@@ -48,6 +50,18 @@ fn is_hidden(category: &ApplicationCategory, config: &AppletConfig) -> bool {
         .hidden_categories
         .iter()
         .any(|key| key == category.key.as_ref())
+}
+
+/// The category with its name from `config.category_names`, if one is set.
+fn renamed(mut category: ApplicationCategory, config: &AppletConfig) -> ApplicationCategory {
+    if let Some(name) = config
+        .category_names
+        .get(category.key.as_ref())
+        .filter(|name| !name.trim().is_empty())
+    {
+        category.name = CategoryName::Custom(name.clone());
+    }
+    category
 }
 
 /// Standard and custom categories, reordered per `config.category_order`;
@@ -121,7 +135,7 @@ pub fn resolve_categories(
             .filter(|c| c.kind == CategoryKind::Custom || used.contains(c.mime_name)),
     );
 
-    categories
+    categories.into_iter().map(|c| renamed(c, config)).collect()
 }
 
 pub fn default_category(has_favorites: bool) -> ApplicationCategory {
@@ -194,6 +208,7 @@ pub fn move_targets(config: &AppletConfig) -> Vec<ApplicationCategory> {
     ordered_rest(config)
         .into_iter()
         .filter(|c| !is_hidden(c, config))
+        .map(|c| renamed(c, config))
         .collect()
 }
 
@@ -319,6 +334,21 @@ mod tests {
         assert_eq!(keys(&with)[0], "favorites");
         let without = resolve_categories(&apps, &config, false);
         assert!(!keys(&without).contains(&"favorites".to_string()));
+    }
+
+    #[test]
+    fn renamed_categories_use_their_new_name_and_blank_keeps_the_default() {
+        let mut config = AppletConfig::default();
+        config.category_names.insert("Audio".to_string(), "Music".to_string());
+        config.category_names.insert("all-applications".to_string(), "  ".to_string());
+        let apps = vec![entry("a", &["Audio"])];
+        let got = resolve_categories(&apps, &config, false);
+        let audio = got.iter().find(|c| c.key == "Audio").unwrap();
+        assert_eq!(audio.name, CategoryName::Custom("Music".to_string()));
+        let all = got.iter().find(|c| c.key == "all-applications").unwrap();
+        assert_eq!(all.name, ApplicationCategory::ALL.name);
+        let target = move_targets(&config).into_iter().find(|c| c.key == "Audio").unwrap();
+        assert_eq!(target.name, CategoryName::Custom("Music".to_string()));
     }
 
     #[test]
