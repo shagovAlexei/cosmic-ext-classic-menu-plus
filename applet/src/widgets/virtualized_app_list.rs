@@ -187,7 +187,11 @@ impl VirtualizedAppList {
         app: &'a Arc<ApplicationEntry>,
         button: impl Into<Element<'a, Message>>,
     ) -> Element<'a, Message> {
-        let widget = cosmic::widget::context_menu(button, Self::create_context_menu(applet, app))
+        // libcosmic's context_menu panics on `None`
+        let Some(menu) = Self::create_context_menu(applet, app) else {
+            return button.into();
+        };
+        let widget = cosmic::widget::context_menu(button, Some(menu))
             .close_on_escape(true)
             .on_surface_action(Message::ContextMenuAction)
             .window_id(applet.popup.unwrap_or_else(|| Id::NONE));

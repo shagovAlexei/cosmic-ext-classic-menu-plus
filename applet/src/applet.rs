@@ -615,6 +615,8 @@ impl Applet {
         self.sidebar_visible = !self.config.sidebar_hidden_by_default;
         self.available_applications =
             crate::logic::apps::get_apps_of_category(category.clone(), &self.config);
+        // the cached menus are for the previous list; a missing one panics libcosmic
+        self.rebuild_context_menus();
         self.selected_item_index = None;
         self.pending_confirmation = None;
         self.moving_app = None;

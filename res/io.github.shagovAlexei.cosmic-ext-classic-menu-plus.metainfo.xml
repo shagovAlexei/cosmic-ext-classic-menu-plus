@@ -56,17 +56,24 @@
   <screenshots>
     <screenshot type="default">
       <image>
-        https://raw.githubusercontent.com/shagovAlexei/cosmic-ext-classic-menu-plus/refs/tags/0.1.0/screenshots/cosmic-ext-classic-menu-applet.png
+        https://raw.githubusercontent.com/shagovAlexei/cosmic-ext-classic-menu-plus/refs/tags/0.1.5/screenshots/layout-list.png
       </image>
       <caption>Main menu with favorites</caption>
       <caption xml:lang="ru">Главное меню с избранным</caption>
     </screenshot>
     <screenshot>
       <image>
-        https://raw.githubusercontent.com/shagovAlexei/cosmic-ext-classic-menu-plus/refs/tags/0.1.0/screenshots/cosmic-ext-classic-menu-settings.png
+        https://raw.githubusercontent.com/shagovAlexei/cosmic-ext-classic-menu-plus/refs/tags/0.1.5/screenshots/layout-grid.png
       </image>
-      <caption>Settings app</caption>
-      <caption xml:lang="ru">Приложение настроек</caption>
+      <caption>Grid layout</caption>
+      <caption xml:lang="ru">Вид сеткой</caption>
+    </screenshot>
+    <screenshot>
+      <image>
+        https://raw.githubusercontent.com/shagovAlexei/cosmic-ext-classic-menu-plus/refs/tags/0.1.5/screenshots/settings-appearance.png
+      </image>
+      <caption>Appearance settings</caption>
+      <caption xml:lang="ru">Настройки оформления</caption>
     </screenshot>
   </screenshots>
   <content_rating type="oars-1.1" />
