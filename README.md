@@ -1,26 +1,83 @@
 # cosmic-ext-classic-menu-plus
 
-Classic Menu is a customizable application launcher for the COSMIC™ desktop environment. It provides a classic style menu for launching applications, accessing system tools, and managing power options.
+Classic Menu Plus is an application menu for the COSMIC™ desktop. It shows your apps by category in a list or a grid, with favorites, search, power buttons and a separate settings app.
 
-![Classic Menu Screenshot](screenshots/cosmic-ext-classic-menu-applet.png)
+<img src="screenshots/layout-list.png" width="380" alt="Classic Menu Plus with favorites in the list layout">
 
 ## Features
 
-- Classic-style application menu
-- Search functionality with fuzzy matching and typo tolerance
-- Favorites: pin apps from their right-click menu, shown first and open by default once you have any
-- Categories: standard freedesktop categories plus your own (custom name and icon), move apps between categories or hide them from the menu, reorder and hide categories
+- Grid, list and hybrid layouts. Hybrid shows Favorites and Recently used as a grid and the other categories as a list.
+- Favorites: add apps from their right-click menu and reorder them in the settings
+- Categories: the standard freedesktop categories and your own, each with a name and icon. Rename, reorder or hide any category, move apps between categories or hide them from the menu.
 - Recently used applications
-- Power options: logout, suspend, hibernate, lock, reboot, shutdown, with a confirmation step for hibernate; pick which buttons to show and in what order
-- Appearance settings: popup width/height, application icon size, compact/normal list density
-- System tools (settings, system monitor, disk management)
-- A standalone settings app (`cosmic-ext-classic-menu-plus-settings`) for everything above — see `screenshots/cosmic-ext-classic-menu-settings.png`
+- Search by name, generic name or description, with typo tolerance
+- Power buttons: log out, suspend, hibernate, lock, restart, shut down. Pick which ones to show and their order. Hibernate asks for confirmation.
+- Menu size, app icon size and list density
+- Panel icon chosen from a list of logos with a preview, a monochrome option, or your own file
+- The sidebar and the power buttons can be hidden, and the menu can open on any category
+- Pin apps to the COSMIC dock
+- A settings app (`cosmic-ext-classic-menu-plus-settings`), also opened from the gear and the "i" buttons in the menu header
+
+## Layouts
+
+<table>
+  <tr><td><img src="screenshots/layout-list.png" width="300" alt="Favorites in the list layout"></td><td><strong>List</strong><br>Name and description on each row.</td></tr>
+  <tr><td><img src="screenshots/layout-grid.png" width="300" alt="All applications in the grid layout"></td><td><strong>Grid</strong><br>App icons in a grid. Arrow keys move between cells and rows.</td></tr>
+  <tr><td><img src="screenshots/layout-hybrid.png" width="300" alt="Recently used apps as a grid in the hybrid layout"></td><td><strong>Hybrid</strong><br>Favorites and Recently used as a grid, other categories as a list.</td></tr>
+  <tr><td><img src="screenshots/sidebar-hidden.png" width="300" alt="Grid layout with the categories sidebar hidden"></td><td><strong>Sidebar hidden</strong><br>The apps take the full width. The power buttons move under the app list.</td></tr>
+  <tr><td><img src="screenshots/compact.png" width="300" alt="Favorites with the sidebar and the power buttons hidden"></td><td><strong>Compact</strong><br>Sidebar and power buttons hidden.</td></tr>
+</table>
+
+## Settings
+
+<table>
+  <tr><td><img src="screenshots/settings-general.png" width="420" alt="General settings: menu and search positions, button style, label and panel icon"></td><td><strong>General</strong><br>Position of the categories and the search field, the panel button style, label and icon.</td></tr>
+  <tr><td><img src="screenshots/settings-appearance.png" width="420" alt="Appearance settings: layout, menu size, icon size and list density"></td><td><strong>Appearance</strong><br>Layout, menu size, app icon size and list density, what the sidebar shows and the default category.</td></tr>
+  <tr><td><img src="screenshots/settings-power-buttons.png" width="420" alt="Power button settings with order and on/off switches"></td><td><strong>Power buttons</strong><br>Which buttons to show and in what order.</td></tr>
+  <tr><td><img src="screenshots/settings-favorites.png" width="420" alt="Favorites settings with reorder and remove buttons"></td><td><strong>Favorites</strong><br>Reorder or remove favorites.</td></tr>
+  <tr><td><img src="screenshots/settings-categories.png" width="420" alt="Category settings with names, order and visibility"></td><td><strong>Categories</strong><br>Rename, reorder and hide categories, create your own, and undo hidden or moved apps.</td></tr>
+</table>
+
+### General
+
+- **App menu position:** categories on the left or the right of the app list.
+- **Search field position:** top or bottom.
+- **Applet button style:** icon, label, both, or automatic by panel size.
+- **User widget appearance:** user name, real name, or nothing.
+- **Button label** and **Button icon:** the icon list has a preview of each logo. Its last entry opens a file chooser for your own SVG or PNG.
+- **Monochrome icon:** uses the one-colour version of the selected logo when it has one.
+
+### Appearance
+
+- **Layout:** grid, list or hybrid. See [Layouts](#layouts).
+- **Menu width**, **Menu height**, **App icon size** and **List density.**
+
+### Sidebar
+
+- **Show Favorites** and **Show Recently used:** include or leave out those categories.
+- **Show power buttons:** turn the whole power button row on or off.
+- **Hide sidebar by default:** open the menu without the categories. They still show up while moving an app to another category.
+
+### Default menu
+
+- **Default category:** the category the menu opens on. Automatic opens Favorites when there are any, otherwise All applications.
 
 ## Known issues
 
-- Popup is not in focus when opened, search field and arrow key navigation may not work properly unless the popup is in focus by clicking on it
+- The popup is not focused when it opens, so the search field and arrow keys may not work until you click it.
 
-## Installation 
+## Installation
+
+### From the COSMIC Flatpak repository
+
+```bash
+flatpak remote-add --if-not-exists --user cosmic https://apt.pop-os.org/cosmic/cosmic.flatpakrepo
+flatpak install --user cosmic io.github.shagovAlexei.cosmic-ext-classic-menu-plus
+```
+
+Then add Classic Menu Plus in Settings → Desktop → Panel → Configure panel applets.
+
+### From source
 
 Clone the repository:
 

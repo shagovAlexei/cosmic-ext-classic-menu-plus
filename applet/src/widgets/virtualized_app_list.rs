@@ -33,7 +33,11 @@ impl VirtualizedAppList {
     /// # Returns
     /// A scrollable element containing only the visible app items
     pub fn view(applet: &Applet) -> Element<'_, Message> {
-        let Spacing { space_s, .. } = theme::active().cosmic().spacing;
+        let Spacing { space_xxs, .. } = theme::active().cosmic().spacing;
+
+        if applet.uses_grid() {
+            return Self::view_grid(applet);
+        }
 
         let item_height = applet.list_item_height();
         let scroll_offset = applet.scroll_offset;
@@ -82,7 +86,7 @@ impl VirtualizedAppList {
         // Build list column from items
         let app_list: ListColumn<Message> = items.into_iter().fold(
             cosmic::widget::list_column()
-                .list_item_padding([0., space_s as f32]),
+                .list_item_padding([0., space_xxs as f32]),
             |list, item| list.add(item),
         );
 
@@ -92,6 +96,107 @@ impl VirtualizedAppList {
             .id(applet.scrollable_id.clone())
             .on_scroll(|viewport| Message::ScrollUpdated(viewport))
             .into()
+    }
+
+    /// Grid of icon cells, virtualized by row like the list.
+    fn view_grid(applet: &Applet) -> Element<'_, Message> {
+        let space_s = theme::active().cosmic().spacing.space_s;
+        let columns = applet.grid_columns();
+        let row_height = applet.row_height();
+        let total_rows = applet.available_applications.len().div_ceil(columns);
+
+        let visible_start = (applet.scroll_offset / row_height).floor() as usize;
+        let visible_count = (applet.list_viewport_height() / row_height).ceil() as usize + 1;
+        let render_start = visible_start.saturating_sub(Self::RENDER_BUFFER);
+        let render_end = (visible_start + visible_count + Self::RENDER_BUFFER).min(total_rows);
+
+        let spacer = |rows: usize| -> Element<'_, Message> {
+            cosmic::widget::Space::new()
+                .width(Length::Fill)
+                .height(Length::Fixed(rows as f32 * row_height))
+                .into()
+        };
+
+        let mut rows: Vec<Element<'_, Message>> = Vec::new();
+        if render_start > 0 {
+            rows.push(spacer(render_start));
+        }
+        for row_index in render_start..render_end {
+            let first = row_index * columns;
+            let mut cells: Vec<Element<'_, Message>> = applet.available_applications
+                [first..(first + columns).min(applet.available_applications.len())]
+                .iter()
+                .enumerate()
+                .map(|(offset, app)| Self::create_grid_cell(applet, first + offset, app, row_height))
+                .collect();
+            // pad the last row so its cells keep the same width
+            while cells.len() < columns {
+                cells.push(cosmic::widget::Space::new().width(Length::Fill).into());
+            }
+            rows.push(cosmic::widget::row::with_children(cells).into());
+        }
+        if render_end < total_rows {
+            rows.push(spacer(total_rows - render_end));
+        }
+
+        scrollable(container(cosmic::widget::column::with_children(rows)).padding([0, space_s]))
+            .height(Length::Fill)
+            .width(Length::FillPortion(5))
+            .id(applet.scrollable_id.clone())
+            .on_scroll(|viewport| Message::ScrollUpdated(viewport))
+            .into()
+    }
+
+    /// An app cell of the grid: icon above a one-line name.
+    fn create_grid_cell<'a>(
+        applet: &'a Applet,
+        index: usize,
+        app: &'a Arc<ApplicationEntry>,
+        cell_height: f32,
+    ) -> Element<'a, Message> {
+        use cosmic::iced::core::text::EllipsizeHeightLimit;
+        use cosmic::iced::widget::text::{Ellipsize, Wrapping};
+
+        let icon_size = appearance::grid_icon_size(applet.list_icon_size());
+        let name = text::body(&app.name)
+            .wrapping(Wrapping::None)
+            .ellipsize(Ellipsize::End(EllipsizeHeightLimit::Lines(1)))
+            .align_x(Alignment::Center)
+            .width(Length::Fill);
+
+        let button = cosmic::widget::button::custom(
+            column![Self::create_icon_widget(app, icon_size), name]
+                .spacing(4)
+                .align_x(Alignment::Center),
+        )
+        .padding(8)
+        .on_press(Message::ApplicationSelected(app.clone()))
+        .class(if applet.selected_item_index == Some(index) {
+            cosmic::theme::Button::Suggested
+        } else {
+            cosmic::theme::Button::AppletMenu
+        })
+        .width(Length::Fill)
+        .height(Length::Fixed(cell_height));
+
+        Self::with_context_menu(applet, app, button)
+    }
+
+    fn with_context_menu<'a>(
+        applet: &'a Applet,
+        app: &'a Arc<ApplicationEntry>,
+        button: impl Into<Element<'a, Message>>,
+    ) -> Element<'a, Message> {
+        // libcosmic's context_menu panics on `None`
+        let Some(menu) = Self::create_context_menu(applet, app) else {
+            return button.into();
+        };
+        let widget = cosmic::widget::context_menu(button, Some(menu))
+            .close_on_escape(true)
+            .on_surface_action(Message::ContextMenuAction)
+            .window_id(applet.popup.unwrap_or_else(|| Id::NONE));
+
+        ScrollAwareContextMenu::new(widget, applet.scroll_offset).into()
     }
 
     /// Creates an individual app button with context menu
@@ -142,14 +247,7 @@ impl VirtualizedAppList {
         .width(Length::Fill)
         .height(Length::Fixed(item_height));
 
-        let context_menu = Self::create_context_menu(applet, app);
-
-        let widget = cosmic::widget::context_menu(button, context_menu)
-            .close_on_escape(true)
-            .on_surface_action(Message::ContextMenuAction)
-            .window_id(applet.popup.unwrap_or_else(|| Id::NONE));
-
-        ScrollAwareContextMenu::new(widget, applet.scroll_offset).into()
+        Self::with_context_menu(applet, app, button)
     }
 
     /// Creates the icon widget for an application

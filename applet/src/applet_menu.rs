@@ -84,6 +84,7 @@ impl AppletMenu {
         include_bytes!("../../res/icons/bundled/user-idle-symbolic.svg");
     const SETTINGS_SYMBOLIC: &[u8] =
         include_bytes!("../../res/icons/bundled/preferences-system-symbolic.svg");
+    const ABOUT_SYMBOLIC: &[u8] = include_bytes!("../../res/icons/bundled/help-about-symbolic.svg");
 
     pub fn view_main_menu_list(applet: &Applet) -> Element<'_, Message> {
         let Spacing {
@@ -101,13 +102,21 @@ impl AppletMenu {
                 .width(Length::Shrink)
                 .padding(5);
 
-        let dual_pane = match applet.config.app_menu_position {
-            HorizontalPosition::Left => {
-                row![app_list, vertical_spacer, categories_pane].padding([space_xxs, 0])
+        let dual_pane: Element<Message> = if !applet.sidebar_visible {
+            // power buttons normally sit at the bottom of the sidebar
+            column![app_list, AppletMenu::create_power_menu(applet)]
+                .padding([space_xxs, 0])
+                .into()
+        } else {
+            match applet.config.app_menu_position {
+                HorizontalPosition::Left => {
+                    row![app_list, vertical_spacer, categories_pane].padding([space_xxs, 0])
+                }
+                HorizontalPosition::Right => {
+                    row![categories_pane, vertical_spacer, app_list].padding([space_xxs, 0])
+                }
             }
-            HorizontalPosition::Right => {
-                row![categories_pane, vertical_spacer, app_list].padding([space_xxs, 0])
-            }
+            .into()
         };
         let menu_layout = match applet.config.search_field_position {
             VerticalPosition::Top => {
@@ -262,7 +271,7 @@ impl AppletMenu {
             .into()
         } else {
             let actions = PowerAction::visible(&applet.config.power_buttons, applet.can_hibernate);
-            if actions.is_empty() {
+            if actions.is_empty() || !applet.config.show_power_actions {
                 return cosmic::widget::Space::new().width(0).height(0).into();
             }
             cosmic::widget::row::with_children(
@@ -494,9 +503,20 @@ impl AppletMenu {
                 cosmic::widget::tooltip::Position::Bottom,
             );
 
+            let about_button = cosmic::widget::tooltip(
+                cosmic::widget::button::icon(
+                    cosmic::widget::icon::from_svg_bytes(AppletMenu::ABOUT_SYMBOLIC).symbolic(true),
+                )
+                .padding(8)
+                .on_press(Message::LaunchTool(SystemTool::APPLET_ABOUT)),
+                text(fl!("about")),
+                cosmic::widget::tooltip::Position::Bottom,
+            );
+
             row![
                 user_button,
                 cosmic::widget::Space::new().width(Length::Fill),
+                about_button,
                 settings_button
             ]
             .align_y(Alignment::Center)

@@ -39,3 +39,4 @@ add-to-favorites=Add to favorites
 move-to=Move to...
 restore-category=Restore original category
 hide-from-menu=Hide from menu
+about = About

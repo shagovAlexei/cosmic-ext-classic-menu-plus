@@ -9,6 +9,10 @@ impl SystemTool {
     pub const APPLET_SETTINGS: SystemTool = Self {
         exec: "cosmic-ext-classic-menu-plus-settings",
     };
+    /// The settings app opened on its About page.
+    pub const APPLET_ABOUT: SystemTool = Self {
+        exec: "cosmic-ext-classic-menu-plus-settings --about",
+    };
     pub const SYSTEM_SETTINGS: SystemTool = Self {
         exec: "cosmic-settings",
     };
@@ -23,7 +27,7 @@ impl SystemTool {
     };
 
     pub fn perform(&self) {
-        if self == &SystemTool::APPLET_SETTINGS {
+        if self == &SystemTool::APPLET_SETTINGS || self == &SystemTool::APPLET_ABOUT {
             self.handle_applet_settings();
             return;
         }
@@ -35,10 +39,11 @@ impl SystemTool {
         let env_vars: Vec<(String, String)> = std::env::vars().collect();
         let app_id = Some("io.github.shagovAlexei.cosmic-ext-classic-menu-plus.settings");
 
+        let exec = self.exec;
         // Spawn the asynchronous execution
         tokio::spawn(async move {
             cosmic::desktop::spawn_desktop_exec(
-                SystemTool::APPLET_SETTINGS.exec,
+                exec,
                 env_vars,
                 app_id.as_deref(),
                 false,

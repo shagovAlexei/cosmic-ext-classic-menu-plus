@@ -41,6 +41,13 @@ pub struct AppletConfig {
     /// Category key -> name replacing the built-in one (standard and
     /// permanent categories; custom ones keep their name in `custom_categories`).
     pub category_names: BTreeMap<String, String>,
+    pub layout: MenuLayout,
+    /// Open the menu with the categories pane collapsed.
+    pub sidebar_hidden_by_default: bool,
+    pub show_power_actions: bool,
+    /// Category key selected when the menu opens; empty means Favorites when
+    /// there are any, otherwise All applications.
+    pub default_category: String,
 }
 
 impl Default for AppletConfig {
@@ -69,6 +76,10 @@ impl Default for AppletConfig {
             hidden_categories: vec![],
             category_order: vec![],
             category_names: BTreeMap::new(),
+            layout: MenuLayout::default(),
+            sidebar_hidden_by_default: false,
+            show_power_actions: true,
+            default_category: String::new(),
         }
     }
 }
@@ -128,6 +139,16 @@ impl Default for HorizontalPosition {
     fn default() -> Self {
         HorizontalPosition::Left
     }
+}
+
+/// How apps are shown: Hybrid uses the grid for Favorites and Recently used
+/// and the list everywhere else.
+#[derive(Debug, Clone, Copy, Default, Eq, PartialEq, Serialize, Deserialize)]
+pub enum MenuLayout {
+    Grid,
+    #[default]
+    List,
+    Hybrid,
 }
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Serialize, Deserialize)]

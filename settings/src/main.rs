@@ -23,5 +23,7 @@ fn main() -> cosmic::iced::Result {
         .resizable(Some(0.0));
 
     // Starts the application's event loop with `()` as the application's flags.
-    cosmic::app::run::<app::AppModel>(settings, ())
+    // `--about` opens the About page (the applet's "i" button).
+    let about = std::env::args().any(|arg| arg == "--about");
+    cosmic::app::run::<app::AppModel>(settings, about)
 }

@@ -56,17 +56,24 @@
   <screenshots>
     <screenshot type="default">
       <image>
-        https://raw.githubusercontent.com/shagovAlexei/cosmic-ext-classic-menu-plus/refs/tags/0.1.0/screenshots/cosmic-ext-classic-menu-applet.png
+        https://raw.githubusercontent.com/shagovAlexei/cosmic-ext-classic-menu-plus/refs/tags/0.1.5/screenshots/layout-list.png
       </image>
       <caption>Main menu with favorites</caption>
       <caption xml:lang="ru">Главное меню с избранным</caption>
     </screenshot>
     <screenshot>
       <image>
-        https://raw.githubusercontent.com/shagovAlexei/cosmic-ext-classic-menu-plus/refs/tags/0.1.0/screenshots/cosmic-ext-classic-menu-settings.png
+        https://raw.githubusercontent.com/shagovAlexei/cosmic-ext-classic-menu-plus/refs/tags/0.1.5/screenshots/layout-grid.png
       </image>
-      <caption>Settings app</caption>
-      <caption xml:lang="ru">Приложение настроек</caption>
+      <caption>Grid layout</caption>
+      <caption xml:lang="ru">Вид сеткой</caption>
+    </screenshot>
+    <screenshot>
+      <image>
+        https://raw.githubusercontent.com/shagovAlexei/cosmic-ext-classic-menu-plus/refs/tags/0.1.5/screenshots/settings-appearance.png
+      </image>
+      <caption>Appearance settings</caption>
+      <caption xml:lang="ru">Настройки оформления</caption>
     </screenshot>
   </screenshots>
   <content_rating type="oars-1.1" />
@@ -80,6 +87,11 @@
     <category>System</category>
   </categories>
   <releases>
+    <release version="0.1.5" date="2026-10-16">
+      <description>
+        <p>Grid, list and hybrid layouts. The panel icon is picked from a dropdown with previews, with a monochrome switch and the app's own icon. New settings hide Favorites, Recently used, the power buttons or the sidebar, and pick the category the menu opens on. An About button in the menu header.</p>
+      </description>
+    </release>
     <release version="0.1.4" date="2026-10-15">
       <description>
         <p>Built-in categories can be renamed in the settings. Fixed Favorites showing only the first four apps until the list was scrolled.</p>

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: {{ license }}
 
 mod categories;
+mod panel_icon;
 
 use crate::fl;
 use cosmic::app::context_drawer;
@@ -13,9 +14,10 @@ use cosmic::widget::{
     menu::{ItemHeight, ItemWidth},
     nav_bar,
 };
-use cosmic::{Element, iced::Background, widget::text};
+use cosmic::{Element, widget::text};
 use cosmic_ext_classic_menu_plus_applet::config::{
-    AppletButtonStyle, AppletConfig, HorizontalPosition, UserWidgetStyle, VerticalPosition,
+    AppletButtonStyle, AppletConfig, HorizontalPosition, MenuLayout, UserWidgetStyle,
+    VerticalPosition,
 };
 use cosmic_ext_classic_menu_plus_applet::model::appearance::{self, ListDensity};
 use cosmic_ext_classic_menu_plus_applet::model::application_entry::{ApplicationEntry, IconHandle};
@@ -60,6 +62,8 @@ pub struct AppModel {
     apps: Vec<Arc<ApplicationEntry>>,
     /// Id of the custom category whose icon picker is open.
     editing_category_icon: Option<String>,
+    /// Installed panel icon files, read once at startup.
+    panel_icons: Vec<String>,
 }
 
 /// Messages emitted by the application and its widgets.
@@ -74,7 +78,6 @@ pub enum Message {
     UserWidgetChanged(usize),
     ButtonLabelChanged(String),
     ToggleContextPage(ContextPage),
-    OpenIconPicker,
     ButtonIconChanged(PathBuf),
     CustomIconSelected,
     PowerButtonToggled(PowerAction),
@@ -97,6 +100,11 @@ pub enum Message {
     CategoryRemoved(String),
     AppUnhidden(String),
     AppCategoryReset(String),
+    LayoutChanged(MenuLayout),
+    SidebarHiddenToggled(bool),
+    PowerActionsToggled(bool),
+    /// Category key, or empty for automatic.
+    DefaultCategoryChanged(String),
 }
 
 /// Create a COSMIC application from the app model
@@ -105,7 +113,8 @@ impl cosmic::Application for AppModel {
     type Executor = cosmic::executor::Default;
 
     /// Data that your application receives to its init method.
-    type Flags = ();
+    /// Open on the About page.
+    type Flags = bool;
 
     /// Messages which the application and its widgets will emit.
     type Message = Message;
@@ -140,7 +149,7 @@ impl cosmic::Application for AppModel {
     /// Initializes the application with any given flags and startup commands.
     fn init(
         mut core: cosmic::Core,
-        _flags: Self::Flags,
+        open_about: Self::Flags,
     ) -> (Self, Task<cosmic::Action<Self::Message>>) {
         core.window.show_maximize = false;
 
@@ -190,6 +199,12 @@ impl cosmic::Application for AppModel {
             .text(fl!("about"))
             .icon(icon::from_name("help-about-symbolic"))
             .data(Page::About);
+        if open_about {
+            let about = nav.iter().last();
+            if let Some(id) = about {
+                nav.activate(id);
+            }
+        }
 
         // Construct the app model with the runtime's core.
         let app = AppModel {
@@ -202,6 +217,7 @@ impl cosmic::Application for AppModel {
             nav,
             apps: Vec::new(),
             editing_category_icon: None,
+            panel_icons: Self::system_icon_names(),
         };
 
         (app, Task::none())
@@ -301,11 +317,6 @@ impl cosmic::Application for AppModel {
             cosmic::widget::text_input(fl!("button-label-placeholder"), &self.config.button_label)
                 .on_input(Message::ButtonLabelChanged)
         ];
-        let button_icon = cosmic::iced::widget::row![
-            cosmic::widget::Space::new().width(Length::Fill).height(5),
-            cosmic::widget::button::text(fl!("button-icon-placeholder"))
-                .on_press(Message::OpenIconPicker) // 4. Open picker on click
-        ];
 
         let general_section = cosmic::widget::settings::section()
             .title(fl!("general"))
@@ -331,12 +342,18 @@ impl cosmic::Application for AppModel {
             ))
             .add(cosmic::widget::settings::item(
                 fl!("button-icon"),
-                button_icon,
+                self.panel_icon_dropdown(),
+            ))
+            .add(cosmic::widget::settings::item(
+                fl!("monochrome-icon"),
+                self.panel_icon_mono_toggle(),
             ));
 
         let page: Element<'_, Message> = match self.nav.active_data::<Page>() {
             Some(Page::Appearance) => cosmic::widget::column::with_children(vec![
                 self.appearance_section().into(),
+                self.sidebar_section().into(),
+                self.default_menu_section().into(),
                 cosmic::widget::button::standard(fl!("default-settings"))
                     .on_press(Message::ResetAppearance)
                     .into(),
@@ -375,11 +392,6 @@ impl cosmic::Application for AppModel {
                 Message::ToggleContextPage(ContextPage::About),
             )
             .title(fl!("about")),
-            ContextPage::IconPicker => context_drawer::context_drawer(
-                self.icon_picker(), // 3. Show icon picker
-                Message::ToggleContextPage(ContextPage::IconPicker),
-            )
-            .title(fl!("button-icon")),
             ContextPage::CategoryIcon => context_drawer::context_drawer(
                 self.category_icon_picker(),
                 Message::ToggleContextPage(ContextPage::CategoryIcon),
@@ -571,6 +583,7 @@ impl cosmic::Application for AppModel {
                 self.config.popup_height = appearance::DEFAULT_POPUP_HEIGHT;
                 self.config.app_icon_size = appearance::DEFAULT_ICON_SIZE;
                 self.config.list_density = ListDensity::default();
+                self.config.layout = MenuLayout::default();
                 self.write_config("appearance defaults");
                 Task::none()
             }
@@ -676,10 +689,24 @@ impl cosmic::Application for AppModel {
 
                 Task::none()
             }
-            Message::OpenIconPicker => {
-                self.context_page = ContextPage::IconPicker;
-                self.core.window.show_context = true;
-
+            Message::LayoutChanged(layout) => {
+                self.config.layout = layout;
+                self.write_config("layout");
+                Task::none()
+            }
+            Message::SidebarHiddenToggled(hidden) => {
+                self.config.sidebar_hidden_by_default = hidden;
+                self.write_config("sidebar hidden by default");
+                Task::none()
+            }
+            Message::PowerActionsToggled(show) => {
+                self.config.show_power_actions = show;
+                self.write_config("show power actions");
+                Task::none()
+            }
+            Message::DefaultCategoryChanged(key) => {
+                self.config.default_category = key;
+                self.write_config("default category");
                 Task::none()
             }
             Message::CustomIconSelected => Task::perform(AppModel::pick_custom_icon(), |res| {
@@ -752,8 +779,28 @@ impl AppModel {
             ListDensity::Normal => 1,
         };
 
+        let layout_radio = |label: String, layout: MenuLayout| {
+            cosmic::widget::Radio::new(
+                text::body(label),
+                layout,
+                Some(self.config.layout),
+                Message::LayoutChanged,
+            )
+        };
+        let layout = cosmic::iced::widget::row![
+            layout_radio(fl!("layout-grid"), MenuLayout::Grid),
+            layout_radio(fl!("layout-list"), MenuLayout::List),
+            layout_radio(fl!("layout-hybrid"), MenuLayout::Hybrid),
+        ]
+        .spacing(cosmic::theme::active().cosmic().space_m());
+
         cosmic::widget::settings::section()
             .title(fl!("appearance"))
+            .add(
+                cosmic::widget::settings::item::builder(fl!("layout"))
+                    .description(fl!("layout-description"))
+                    .control(layout),
+            )
             .add(cosmic::widget::settings::item(
                 fl!("popup-width"),
                 cosmic::widget::spin_button(
@@ -935,128 +982,68 @@ impl AppModel {
         None
     }
 
-    pub fn icon_picker(&'_ self) -> Element<'_, Message> {
-        let mut icons = Self::system_icon_names();
-        let icons_per_row = 3;
-        let theme = cosmic::theme::active();
-        let theme = theme.cosmic();
+    /// Toggles for what the menu shows besides the app list.
+    fn sidebar_section(&self) -> cosmic::widget::settings::Section<'_, Message> {
+        let shown = |key: &str| !self.config.hidden_categories.iter().any(|k| k == key);
+        let category_toggle = |label: String, key: &'static str| {
+            cosmic::widget::settings::item(
+                label,
+                cosmic::widget::toggler(shown(key))
+                    .on_toggle(move |_| Message::CategoryVisibilityToggled(key.to_string())),
+            )
+        };
 
-        let mut grid = cosmic::iced::widget::Column::new().spacing(theme.space_xs());
-
-        // handle custom icon selection
-        let currently_selected_icon: PathBuf = PathBuf::from(&self.config.button_icon);
-        if currently_selected_icon.exists()
-            && !icons.contains(&currently_selected_icon.to_string_lossy().into_owned())
-        {
-            icons.insert(0, currently_selected_icon.to_string_lossy().into_owned());
-        }
-
-        // Add default set of icons
-        for chunk in icons.chunks(icons_per_row) {
-            let mut row = cosmic::iced::widget::Row::new().spacing(theme.space_xs());
-            for icon_path in chunk {
-                let icon_pathbuf: PathBuf = icon_path.into();
-                let icon_name = icon_pathbuf
-                    .file_stem()
-                    .and_then(|stem| stem.to_str())
-                    .unwrap_or("unknown")
-                    .to_string();
-                row = row.push(Self::button(
-                    &icon_name,
-                    icon_pathbuf,
-                    self.config.button_icon == *icon_path,
-                    Message::ButtonIconChanged,
-                ));
-            }
-            grid = grid.push(row);
-        }
-
-        let custom_icon_button = cosmic::widget::button::standard(fl!("select-custom-icon"))
-            .on_press(Message::CustomIconSelected);
-
-        cosmic::iced::widget::column![custom_icon_button, grid]
-            .width(Length::Fill)
-            .align_x(Alignment::Center)
-            .spacing(theme.space_xs())
-            .into()
+        cosmic::widget::settings::section()
+            .title(fl!("sidebar"))
+            .add(category_toggle(
+                fl!("show-favorites"),
+                "favorites",
+            ))
+            .add(category_toggle(
+                fl!("show-recently-used"),
+                "recently-used",
+            ))
+            .add(cosmic::widget::settings::item(
+                fl!("show-power-actions"),
+                cosmic::widget::toggler(self.config.show_power_actions)
+                    .on_toggle(Message::PowerActionsToggled),
+            ))
+            .add(
+                cosmic::widget::settings::item::builder(fl!("hide-sidebar"))
+                    .description(fl!("hide-sidebar-description"))
+                    .toggler(self.config.sidebar_hidden_by_default, Message::SidebarHiddenToggled),
+            )
     }
 
-    fn button(
-        name: &String,
-        icon_pathbuf: PathBuf,
-        selected: bool,
-        callback: impl Fn(PathBuf) -> Message,
-    ) -> Element<'static, Message> {
-        const ICON_THUMB_SIZE: u16 = 32;
-        const ICON_NAME_TRUNC: usize = 20;
+    /// The category the menu opens on.
+    fn default_menu_section(&self) -> cosmic::widget::settings::Section<'_, Message> {
+        let (mut keys, mut labels) = (vec![String::new()], vec![fl!("default-category-auto")]);
+        for (category, visible) in cosmic_ext_classic_menu_plus_applet::logic::categories::editor_rows(&self.config) {
+            if !visible {
+                continue;
+            }
+            let key = category.key.to_string();
+            labels.push(
+                self.config
+                    .category_names
+                    .get(&key)
+                    .filter(|name| !name.trim().is_empty())
+                    .cloned()
+                    .unwrap_or_else(|| category.get_display_name()),
+            );
+            keys.push(key);
+        }
+        let selected = keys.iter().position(|k| *k == self.config.default_category);
 
-        let theme = cosmic::theme::active();
-        let theme = theme.cosmic();
-        let background = Background::Color(theme.palette.neutral_4.into());
-
-        cosmic::iced::widget::column::Column::new()
-            .push(
-                cosmic::widget::button::custom_image_button(
-                    cosmic::widget::icon::from_path(icon_pathbuf.clone())
-                        .icon()
-                        .size(ICON_THUMB_SIZE),
-                    None,
-                )
-                .on_press(callback(icon_pathbuf.clone()))
-                .selected(selected)
-                .padding(theme.space_xs())
-                // Image button's style mostly works, but it needs a background to fit the design
-                .class(button::ButtonClass::Custom {
-                    active: Box::new(move |focused, theme| {
-                        let mut appearance = <cosmic::theme::Theme as button::Catalog>::active(
-                            theme,
-                            focused,
-                            selected,
-                            &cosmic::theme::Button::Image,
-                        );
-                        appearance.background = Some(background);
-                        appearance
-                    }),
-                    disabled: Box::new(move |theme| {
-                        let mut appearance = <cosmic::theme::Theme as button::Catalog>::disabled(
-                            theme,
-                            &cosmic::theme::Button::Image,
-                        );
-                        appearance.background = Some(background);
-                        appearance
-                    }),
-                    hovered: Box::new(move |focused, theme| {
-                        let mut appearance = <cosmic::theme::Theme as button::Catalog>::hovered(
-                            theme,
-                            focused,
-                            selected,
-                            &cosmic::theme::Button::Image,
-                        );
-                        appearance.background = Some(background);
-                        appearance
-                    }),
-                    pressed: Box::new(move |focused, theme| {
-                        let mut appearance = <cosmic::theme::Theme as button::Catalog>::pressed(
-                            theme,
-                            focused,
-                            selected,
-                            &cosmic::theme::Button::Image,
-                        );
-                        appearance.background = Some(background);
-                        appearance
-                    }),
-                }),
+        cosmic::widget::settings::section()
+            .title(fl!("default-menu"))
+            .add(
+                cosmic::widget::settings::item::builder(fl!("default-category"))
+                    .description(fl!("default-category-description"))
+                    .control(cosmic::widget::dropdown(labels, selected.or(Some(0)), move |index| {
+                        Message::DefaultCategoryChanged(keys[index].clone())
+                    })),
             )
-            .push(
-                text::body(if name.len() > ICON_NAME_TRUNC {
-                    format!("{name:.ICON_NAME_TRUNC$}...")
-                } else {
-                    name.into()
-                })
-                .width(Length::Fixed((ICON_THUMB_SIZE * 3) as _)),
-            )
-            .spacing(theme.space_xxs())
-            .into()
     }
 }
 
@@ -1082,7 +1069,6 @@ impl menu::action::MenuAction for MenuAction {
 pub enum ContextPage {
     #[default]
     About,
-    IconPicker, // 1. Add new variant
     CategoryIcon,
 }
 

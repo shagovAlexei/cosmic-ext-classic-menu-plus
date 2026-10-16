@@ -1,5 +1,5 @@
 Name:           cosmic-ext-classic-menu-plus
-Version:        0.1.4
+Version:        0.1.5
 Release:        1%{?dist}
 Summary:        Classic Menu Plus Applet
 
@@ -38,6 +38,12 @@ just rootdir=%{buildroot} install
 %{_datadir}/cosmic/io.github.shagovAlexei.cosmic-ext-classic-menu-plus/applet-buttons/*
 
 %changelog
+* Fri Oct 16 2026 Shagov Alexei <shagov.alexei@gmail.com> 0.1.5-1
+- Grid, list and hybrid layouts
+- Panel icon dropdown with previews, a monochrome switch and the app's own icon
+- Settings to hide Favorites, Recently used, power buttons or the sidebar, and to pick the default category
+- About button in the menu header
+
 * Thu Oct 15 2026 Shagov Alexei <shagov.alexei@gmail.com> 0.1.4-1
 - Built-in categories can be renamed in the settings
 - Fixed Favorites showing only the first four apps until the list was scrolled
