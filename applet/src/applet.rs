@@ -26,7 +26,7 @@ use std::sync::Arc;
 
 use crate::applet_button::AppletButton;
 use crate::applet_menu::AppletMenu;
-use crate::config::{AppletButtonStyle, AppletConfig, RecentApplication};
+use crate::config::{AppletButtonStyle, AppletConfig, MenuLayout, RecentApplication};
 use crate::fl;
 use crate::logic::apps::{Event, desktop_files};
 use crate::model::application_category::ApplicationCategory;
@@ -80,6 +80,8 @@ pub struct Applet {
     pub can_hibernate: bool,
     /// Power action waiting for in-popup confirmation.
     pub pending_confirmation: Option<(PowerAction, std::time::Instant)>,
+    /// Whether the categories pane is shown; reset from the config on open.
+    pub sidebar_visible: bool,
 }
 
 /// This is the enum that contains all the possible variants that your application will need to transmit messages.
@@ -106,6 +108,8 @@ pub enum Message {
     UpdateAvailableCategories(Vec<ApplicationCategory>),
     SelectPreviousApp,
     SelectNextApp,
+    SelectLeftApp,
+    SelectRightApp,
     LaunchSelectedApplication,
     SuperKeyPressed,
     AppListConfigUpdated(AppListConfig),
@@ -174,6 +178,7 @@ impl Application for Applet {
             scroll_viewport_height: 0.0,
             can_hibernate: false,
             pending_confirmation: None,
+            sidebar_visible: true,
         };
 
         // fetch current user asynchronously
@@ -356,8 +361,11 @@ impl Application for Applet {
 
                 Task::none()
             }
-            Message::SelectPreviousApp => self.select_previous_app(),
-            Message::SelectNextApp => self.select_next_app(),
+            Message::SelectPreviousApp => self.move_selection(-(self.grid_columns() as isize)),
+            Message::SelectNextApp => self.move_selection(self.grid_columns() as isize),
+            Message::SelectLeftApp if self.uses_grid() => self.move_selection(-1),
+            Message::SelectRightApp if self.uses_grid() => self.move_selection(1),
+            Message::SelectLeftApp | Message::SelectRightApp => Task::none(),
             Message::LaunchSelectedApplication => {
                 dbg!(self.selected_item_index);
                 if let Some(index) = self.selected_item_index {
@@ -417,6 +425,8 @@ impl Application for Applet {
             }
             Message::ChooseCategoryFor(app_index) => {
                 self.moving_app = Some(app_index);
+                // the category chooser lives in the sidebar
+                self.sidebar_visible = true;
                 Task::none()
             }
             Message::CancelChooseCategory => {
@@ -490,6 +500,8 @@ impl Application for Applet {
                     }) => match key {
                         Named::ArrowUp => Some(Message::SelectPreviousApp),
                         Named::ArrowDown => Some(Message::SelectNextApp),
+                        Named::ArrowLeft => Some(Message::SelectLeftApp),
+                        Named::ArrowRight => Some(Message::SelectRightApp),
                         Named::Enter => Some(Message::LaunchSelectedApplication),
 
                         _ => None,
@@ -541,7 +553,44 @@ impl Applet {
         } else {
             crate::model::appearance::clamp_popup_height(self.config.popup_height) as f32
         }
-        .max(self.list_item_height())
+        .max(self.row_height())
+    }
+
+    /// Grid for the whole menu, or in Hybrid only for Favorites and Recently used.
+    pub fn uses_grid(&self) -> bool {
+        match self.config.layout {
+            MenuLayout::List => false,
+            MenuLayout::Grid => true,
+            MenuLayout::Hybrid => self.selected_category.as_ref().is_some_and(|c| {
+                *c == ApplicationCategory::FAVORITES || *c == ApplicationCategory::RECENTLY_USED
+            }),
+        }
+    }
+
+    /// Apps per row: 1 for the list, as many cells as fit for the grid.
+    pub fn grid_columns(&self) -> usize {
+        if !self.uses_grid() {
+            return 1;
+        }
+        let spacing = cosmic::theme::active().cosmic().spacing;
+        // popup padding on both sides; the sidebar and its divider take 3/8
+        let width = crate::model::appearance::clamp_popup_width(self.config.popup_width) as f32
+            - 2.0 * f32::from(spacing.space_s);
+        let list_width = if self.sidebar_visible {
+            (width - 11.0) * 5.0 / 8.0
+        } else {
+            width
+        };
+        crate::model::appearance::grid_columns(list_width)
+    }
+
+    /// Height of one scroll row: a list item or a row of grid cells.
+    pub fn row_height(&self) -> f32 {
+        if self.uses_grid() {
+            crate::model::appearance::grid_cell_height(self.list_icon_size())
+        } else {
+            self.list_item_height()
+        }
     }
 
     pub fn handle_event(&mut self, event: Event) -> Task<Message> {
@@ -559,10 +608,11 @@ impl Applet {
     fn toggle_popup(&mut self, popup_type: PopupType) -> Task<Message> {
         // reset popup state
         self.search_field.clear();
-        let category = crate::logic::categories::default_category(
-            crate::logic::apps::has_favorites(&self.config),
-        );
+        let available = crate::logic::apps::load_app_categories(&self.config);
+        let category = crate::logic::categories::default_category(&self.config, &available);
+        self.available_categories = available;
         self.selected_category = Some(category.clone());
+        self.sidebar_visible = !self.config.sidebar_hidden_by_default;
         self.available_applications =
             crate::logic::apps::get_apps_of_category(category.clone(), &self.config);
         self.selected_item_index = None;
@@ -578,13 +628,6 @@ impl Applet {
                     crate::logic::apps::get_apps_of_category(category, &config)
                 }),
                 |res| cosmic::action::app(Message::UpdateAvailableApplications(res.unwrap())),
-            ));
-            let config = self.config.clone();
-            tasks.push(Task::perform(
-                tokio::task::spawn_blocking(move || {
-                    crate::logic::apps::load_app_categories(&config)
-                }),
-                |res| cosmic::action::app(Message::UpdateAvailableCategories(res.unwrap())),
             ));
         }
 
@@ -619,12 +662,11 @@ impl Applet {
     /// after anything affecting category resolution changed: `pinned_apps`,
     /// custom categories, overrides, hidden apps/categories or their order.
     fn refresh_menu_view(&mut self) -> Task<Message> {
-        let has_favorites = crate::logic::apps::has_favorites(&self.config);
         let available = crate::logic::apps::load_app_categories(&self.config);
         self.selected_category = crate::logic::categories::category_after_change(
             self.selected_category.take(),
             &available,
-            has_favorites,
+            &self.config,
         );
         self.available_categories = available;
         self.selected_item_index = None;
@@ -927,87 +969,41 @@ impl Applet {
         self.core.applet.popup_container(context_menu).into()
     }
 
-    fn select_previous_app(&mut self) -> cosmic::Task<cosmic::Action<Message>> {
-        if self.selected_item_index.is_none() {
+    /// Move the keyboard selection by `delta` items and scroll its row into view.
+    fn move_selection(&mut self, delta: isize) -> cosmic::Task<cosmic::Action<Message>> {
+        self.selected_item_index = crate::model::appearance::step_selection(
+            self.selected_item_index,
+            delta,
+            self.available_applications.len(),
+        );
+        let Some(index) = self.selected_item_index else {
+            return Task::none();
+        };
+
+        let row_height = self.row_height();
+        let viewport_height = self.scroll_viewport_height.max(row_height);
+        let visible_top = self.scroll_offset;
+        let visible_bottom = visible_top + viewport_height;
+
+        let selected_top = (index / self.grid_columns()) as f32 * row_height;
+        let selected_bottom = selected_top + row_height;
+
+        if selected_top >= visible_top && selected_bottom <= visible_bottom {
             return Task::none();
         }
 
-        if let Some(index) = self.selected_item_index {
-            if index > 0 {
-                self.selected_item_index = Some(index - 1);
-            }
-        }
+        let target_offset = if selected_top < visible_top {
+            selected_top
+        } else {
+            selected_bottom - viewport_height + 16.0
+        };
 
-        if let Some(index) = self.selected_item_index {
-            let item_height = self.list_item_height();
-            let viewport_height = self.scroll_viewport_height.max(item_height);
-            let visible_top = self.scroll_offset;
-            let visible_bottom = visible_top + viewport_height;
-
-            let selected_top = index as f32 * item_height;
-            let selected_bottom = selected_top + item_height;
-
-            if selected_top >= visible_top && selected_bottom <= visible_bottom {
-                return Task::none();
-            }
-
-            let target_offset = if selected_top < visible_top {
-                selected_top
-            } else {
-                selected_bottom - viewport_height
-            };
-
-            return Task::batch([cosmic::iced::widget::operation::scroll_to(
-                self.scrollable_id.clone(),
-                AbsoluteOffset {
-                    x: 0.,
-                    y: target_offset,
-                },
-            )]);
-        }
-
-        Task::none()
-    }
-
-    fn select_next_app(&mut self) -> cosmic::Task<cosmic::Action<Message>> {
-        if self.selected_item_index.is_none() && !self.available_applications.is_empty() {
-            self.selected_item_index = Some(0);
-        } else if let Some(index) = self.selected_item_index {
-            if index < self.available_applications.len() - 1 {
-                self.selected_item_index = Some(index + 1);
-            }
-        }
-
-        if let Some(index) = self.selected_item_index {
-            let item_height = self.list_item_height();
-            let viewport_height = self.scroll_viewport_height.max(item_height);
-            let visible_top = self.scroll_offset;
-            let visible_bottom = visible_top + viewport_height;
-
-            let selected_top = index as f32 * item_height;
-            let selected_bottom = selected_top + item_height;
-
-            if selected_top >= visible_top && selected_bottom <= visible_bottom {
-                return Task::none();
-            }
-
-            let target_offset = if selected_top < visible_top {
-                selected_top
-            } else {
-                selected_bottom - viewport_height
-            };
-
-            dbg!(target_offset);
-
-            return Task::batch([cosmic::iced::widget::operation::scroll_to(
-                self.scrollable_id.clone(),
-                AbsoluteOffset {
-                    x: 0.,
-                    y: target_offset + 16.0,
-                },
-            )]);
-        }
-
-        Task::none()
+        cosmic::iced::widget::operation::scroll_to(
+            self.scrollable_id.clone(),
+            AbsoluteOffset {
+                x: 0.,
+                y: target_offset,
+            },
+        )
     }
 }

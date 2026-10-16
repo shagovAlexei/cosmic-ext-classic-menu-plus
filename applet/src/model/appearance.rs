@@ -56,6 +56,41 @@ pub fn resolve_icon_size(configured: u16, space_l: u16) -> u16 {
     clamp_icon_size(if configured == 0 { space_l } else { configured })
 }
 
+/// Smallest icon drawn in a grid cell; the list icon size is used when larger.
+const GRID_MIN_ICON: u16 = 48;
+/// Width a grid cell aims for; the list width is split into as many as fit.
+const GRID_CELL_WIDTH: f32 = 100.0;
+/// Cell padding, gap between icon and name, and the name line.
+const GRID_CELL_EXTRA: u16 = 2 * 8 + 4 + 20;
+
+pub fn grid_icon_size(list_icon_size: u16) -> u16 {
+    list_icon_size.max(GRID_MIN_ICON)
+}
+
+pub fn grid_cell_height(list_icon_size: u16) -> f32 {
+    f32::from(grid_icon_size(list_icon_size) + GRID_CELL_EXTRA)
+}
+
+pub fn grid_columns(list_width: f32) -> usize {
+    ((list_width / GRID_CELL_WIDTH) as usize).max(1)
+}
+
+/// Keyboard selection after moving by `delta` items (±1 within a row, ±columns
+/// between rows). Nothing selected: moving forward selects the first item.
+/// A move that would leave the list keeps the current item.
+pub fn step_selection(current: Option<usize>, delta: isize, len: usize) -> Option<usize> {
+    match current {
+        _ if len == 0 => None,
+        None => (delta > 0).then_some(0),
+        Some(index) => Some(
+            index
+                .checked_add_signed(delta)
+                .filter(|next| *next < len)
+                .unwrap_or(index),
+        ),
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -128,5 +163,26 @@ mod tests {
         assert!(show_comment(ListDensity::Normal, 40));
         assert!(!show_comment(ListDensity::Normal, 32));
         assert!(!show_comment(ListDensity::Compact, 48));
+    }
+
+    #[test]
+    fn grid_fits_as_many_cells_as_the_width_allows() {
+        assert_eq!(grid_columns(50.0), 1);
+        assert_eq!(grid_columns(350.0), 3);
+        assert_eq!(grid_icon_size(32), 48);
+        assert_eq!(grid_icon_size(64), 64);
+        assert_eq!(grid_cell_height(32), 88.0);
+    }
+
+    #[test]
+    fn selection_steps_stay_inside_the_list() {
+        assert_eq!(step_selection(None, 1, 0), None);
+        assert_eq!(step_selection(None, -1, 5), None);
+        assert_eq!(step_selection(None, 4, 5), Some(0));
+        assert_eq!(step_selection(Some(1), 4, 5), Some(1)); // no item below
+        assert_eq!(step_selection(Some(0), 4, 5), Some(4));
+        assert_eq!(step_selection(Some(2), -4, 5), Some(2)); // no row above
+        assert_eq!(step_selection(Some(2), -1, 5), Some(1));
+        assert_eq!(step_selection(Some(9), 1, 5), Some(9));
     }
 }

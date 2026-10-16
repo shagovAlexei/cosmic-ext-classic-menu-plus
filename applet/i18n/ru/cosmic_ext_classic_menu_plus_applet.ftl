@@ -41,3 +41,4 @@ add-to-favorites=В избранное
 move-to=Переместить в...
 restore-category=Вернуть исходную категорию
 hide-from-menu=Скрыть из меню
+about = О программе

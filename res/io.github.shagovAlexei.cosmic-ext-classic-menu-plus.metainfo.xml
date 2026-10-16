@@ -80,6 +80,11 @@
     <category>System</category>
   </categories>
   <releases>
+    <release version="0.1.5" date="2026-10-16">
+      <description>
+        <p>Grid, list and hybrid layouts. The panel icon is picked from a dropdown with previews, with a monochrome switch and the app's own icon. New settings hide Favorites, Recently used, the power buttons or the sidebar, and pick the category the menu opens on. An About button in the menu header.</p>
+      </description>
+    </release>
     <release version="0.1.4" date="2026-10-15">
       <description>
         <p>Built-in categories can be renamed in the settings. Fixed Favorites showing only the first four apps until the list was scrolled.</p>

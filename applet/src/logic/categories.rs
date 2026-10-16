@@ -101,7 +101,7 @@ pub fn has_favorites(config: &AppletConfig, all_apps: &[Arc<ApplicationEntry>]) 
 }
 
 /// Categories to show in the popup, in final order: permanent categories
-/// first (Favorites only when non-empty, Recently used unless hidden, All
+/// first (Favorites when non-empty and not hidden, Recently used unless hidden, All
 /// always), then standard categories with at least one visible app, then
 /// custom categories (shown even if empty), minus anything hidden.
 pub fn resolve_categories(
@@ -119,7 +119,7 @@ pub fn resolve_categories(
         .into_iter()
         .filter(|c| {
             if *c == ApplicationCategory::FAVORITES {
-                has_favorites
+                has_favorites && !is_hidden(c, config)
             } else if *c == ApplicationCategory::ALL {
                 true // All applications can never be hidden
             } else {
@@ -138,12 +138,16 @@ pub fn resolve_categories(
     categories.into_iter().map(|c| renamed(c, config)).collect()
 }
 
-pub fn default_category(has_favorites: bool) -> ApplicationCategory {
-    if has_favorites {
-        ApplicationCategory::FAVORITES
-    } else {
-        ApplicationCategory::ALL
-    }
+/// Category selected when the menu opens: the configured one if it is shown,
+/// else Favorites if shown, else All applications.
+pub fn default_category(
+    config: &AppletConfig,
+    available: &[ApplicationCategory],
+) -> ApplicationCategory {
+    let find = |key: &str| available.iter().find(|c| c.key == key).cloned();
+    find(&config.default_category)
+        .or_else(|| find(&ApplicationCategory::FAVORITES.key))
+        .unwrap_or(ApplicationCategory::ALL)
 }
 
 /// Keeps the selection if it is still shown; otherwise falls back to the
@@ -152,13 +156,13 @@ pub fn default_category(has_favorites: bool) -> ApplicationCategory {
 pub fn category_after_change(
     selected: Option<ApplicationCategory>,
     available: &[ApplicationCategory],
-    has_favorites: bool,
+    config: &AppletConfig,
 ) -> Option<ApplicationCategory> {
     let selected = selected?;
     if available.iter().any(|a| a.key == selected.key) {
         Some(selected)
     } else {
-        Some(default_category(has_favorites))
+        Some(default_category(config, available))
     }
 }
 
@@ -553,5 +557,29 @@ mod tests {
         let targets = move_targets(&config);
         assert!(!targets.iter().any(|c| c.key.as_ref() == "Audio"));
         assert!(targets.iter().any(|c| c.key.as_ref() == "Video"));
+    }
+
+    #[test]
+    fn favorites_can_be_hidden() {
+        let mut config = AppletConfig::default();
+        config.hidden_categories = vec!["favorites".into()];
+        let got = resolve_categories(&[], &config, true);
+        assert!(!keys(&got).contains(&"favorites".to_string()));
+    }
+
+    #[test]
+    fn default_category_prefers_configured_then_favorites_then_all() {
+        let mut config = AppletConfig::default();
+        let apps = vec![entry("a", &["Audio"])];
+        let with_favs = resolve_categories(&apps, &config, true);
+        assert_eq!(default_category(&config, &with_favs).key, "favorites");
+        let no_favs = resolve_categories(&apps, &config, false);
+        assert_eq!(default_category(&config, &no_favs).key, "all-applications");
+
+        config.default_category = "Audio".into();
+        assert_eq!(default_category(&config, &with_favs).key, "Audio");
+        // a configured category that is hidden or empty falls back
+        config.default_category = "Game".into();
+        assert_eq!(default_category(&config, &with_favs).key, "favorites");
     }
 }
