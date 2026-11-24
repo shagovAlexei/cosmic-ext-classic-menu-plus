@@ -126,19 +126,26 @@ impl AppletMenu {
                 column![current_user, dual_pane, search_field].padding([space_xxs, space_s])
             }
         };
+        let menu_layout = menu_layout
+            .width(Length::Fixed(
+                appearance::clamp_popup_width(applet.config.popup_width) as f32,
+            ))
+            .height(Length::Fixed(
+                appearance::clamp_popup_height(applet.config.popup_height) as f32,
+            ));
+
+        // popup_container autosizes the whole window, which would shrink the
+        // full-screen layer surface down to the menu.
+        if applet.menu_is_layer_surface {
+            return container(menu_layout)
+                .class(cosmic::theme::Container::custom(menu_surface_style))
+                .into();
+        }
 
         applet
             .core
             .applet
-            .popup_container(
-                menu_layout
-                    .width(Length::Fixed(
-                        appearance::clamp_popup_width(applet.config.popup_width) as f32,
-                    ))
-                    .height(Length::Fixed(
-                        appearance::clamp_popup_height(applet.config.popup_height) as f32,
-                    )),
-            )
+            .popup_container(menu_layout)
             .limits(
                 Limits::NONE
                     .max_height(AppletMenu::POPUP_MAX_HEIGHT)
@@ -525,5 +532,21 @@ impl AppletMenu {
         } else {
             cosmic::widget::Space::new().width(0).height(0).into()
         }
+    }
+}
+
+/// Background of the menu on its layer surface, as `popup_container` draws it.
+fn menu_surface_style(theme: &cosmic::Theme) -> cosmic::widget::container::Style {
+    let cosmic = theme.cosmic();
+    cosmic::widget::container::Style {
+        text_color: Some(cosmic.background.on.into()),
+        icon_color: Some(cosmic.background.on.into()),
+        background: Some(cosmic::iced::Background::Color(cosmic.background.base.into())),
+        border: cosmic::iced::Border {
+            radius: cosmic.corner_radii.radius_m.into(),
+            width: 1.0,
+            color: cosmic.background.divider.into(),
+        },
+        ..Default::default()
     }
 }

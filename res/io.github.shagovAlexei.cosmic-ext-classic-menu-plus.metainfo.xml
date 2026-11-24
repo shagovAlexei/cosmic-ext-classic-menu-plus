@@ -87,6 +87,11 @@
     <category>System</category>
   </categories>
   <releases>
+    <release version="0.1.6" date="2026-11-24">
+      <description>
+        <p>Type to search as soon as the menu opens, also when it is opened with the keyboard shortcut. The menu then opens in the corner next to the panel; this can be turned off in the settings.</p>
+      </description>
+    </release>
     <release version="0.1.5" date="2026-10-16">
       <description>
         <p>Grid, list and hybrid layouts. The panel icon is picked from a dropdown with previews, with a monochrome switch and the app's own icon. New settings hide Favorites, Recently used, the power buttons or the sidebar, and pick the category the menu opens on. An About button in the menu header.</p>

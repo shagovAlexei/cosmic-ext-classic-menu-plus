@@ -10,7 +10,7 @@ Classic Menu Plus is an application menu for the COSMIC™ desktop. It shows you
 - Favorites: add apps from their right-click menu and reorder them in the settings
 - Categories: the standard freedesktop categories and your own, each with a name and icon. Rename, reorder or hide any category, move apps between categories or hide them from the menu.
 - Recently used applications
-- Search by name, generic name or description, with typo tolerance
+- Search by name, generic name or description, with typo tolerance. Type right away: the search field has the keyboard as soon as the menu opens.
 - Power buttons: log out, suspend, hibernate, lock, restart, shut down. Pick which ones to show and their order. Hibernate asks for confirmation.
 - Menu size, app icon size and list density
 - Panel icon chosen from a list of logos with a preview, a monochrome option, or your own file
@@ -57,6 +57,7 @@ Classic Menu Plus is an application menu for the COSMIC™ desktop. It shows you
 - **Show Favorites** and **Show Recently used:** include or leave out those categories.
 - **Show power buttons:** turn the whole power button row on or off.
 - **Hide sidebar by default:** open the menu without the categories. They still show up while moving an app to another category.
+- **Type to search right away:** the menu takes the keyboard as soon as it opens, also from the keyboard shortcut, and opens in the corner next to the panel. Turn it off to open the menu at the button as a popup, which only takes typing once clicked.
 
 ### Default menu
 
@@ -64,7 +65,7 @@ Classic Menu Plus is an application menu for the COSMIC™ desktop. It shows you
 
 ## Known issues
 
-- The popup is not focused when it opens, so the search field and arrow keys may not work until you click it.
+- With **Type to search right away** turned off, the popup is not focused when it opens, so the search field and arrow keys may not work until you click it.
 
 ## Installation
 

@@ -13,7 +13,11 @@ use cosmic::iced::widget::operation::AbsoluteOffset;
 use cosmic::iced::widget::scrollable::{RelativeOffset, Viewport};
 use cosmic::iced::{
     Alignment,
-    platform_specific::shell::commands::popup::{destroy_popup, get_popup},
+    event::{PlatformSpecific, wayland},
+    platform_specific::shell::commands::{
+        layer_surface::{destroy_layer_surface, get_layer_surface},
+        popup::{destroy_popup, get_popup},
+    },
     widget::{column, row},
     window::Id,
 };
@@ -55,6 +59,13 @@ pub struct Applet {
     pub available_categories: Vec<ApplicationCategory>,
     /// The popup type that is used to determine which popup to display.
     pub popup_type: PopupType,
+    /// Whether the open main menu is a layer surface rather than a popup, see
+    /// `crate::menu_surface`; decided when it opens.
+    pub menu_is_layer_surface: bool,
+    /// Where the menu goes on its layer surface.
+    pub menu_placement: crate::menu_surface::Placement,
+    /// When the menu last closed because it lost the keyboard.
+    pub menu_unfocused_at: Option<std::time::Instant>,
     /// The selected category that is used to filter the applications.
     pub selected_category: Option<ApplicationCategory>,
     /// Currently logged user
@@ -91,6 +102,12 @@ pub struct Applet {
 pub enum Message {
     TogglePopup(PopupType),
     PopupClosed(Id),
+    /// A layer surface lost the keyboard.
+    SurfaceUnfocused(Id),
+    /// Click outside the menu on its layer surface.
+    CloseMenu,
+    /// Click on the menu itself, which must not close it.
+    MenuPressed,
     SearchFieldInput(String),
     SearchCleared,
     PowerOptionSelected(PowerAction),
@@ -162,6 +179,9 @@ impl Application for Applet {
             core,
             search_field: "".to_owned(),
             popup_type: PopupType::MainMenu,
+            menu_is_layer_surface: false,
+            menu_placement: Default::default(),
+            menu_unfocused_at: None,
             selected_category: Some(ApplicationCategory::ALL),
             config,
             current_user: None,
@@ -269,6 +289,9 @@ impl Application for Applet {
 
     fn view_window(&self, _id: Id) -> Element<'_, Message> {
         match self.popup_type {
+            PopupType::MainMenu if self.menu_is_layer_surface => {
+                crate::menu_surface::view(self.view_main_menu(), self.menu_placement)
+            }
             PopupType::MainMenu => self.view_main_menu(),
             PopupType::ContextMenu => self.view_context_menu(),
         }
@@ -281,6 +304,19 @@ impl Application for Applet {
         match message {
             Message::TogglePopup(popup_type) => self.toggle_popup(popup_type),
             Message::PopupClosed(id) => self.close_popup(id),
+            Message::SurfaceUnfocused(id) => {
+                if self.menu_is_layer_surface && self.popup == Some(id) {
+                    self.menu_unfocused_at = Some(std::time::Instant::now());
+                    self.close_popup(id);
+                    return destroy_layer_surface(id);
+                }
+                Task::none()
+            }
+            Message::CloseMenu => match self.popup.take() {
+                Some(p) => self.destroy_surface(p),
+                None => Task::none(),
+            },
+            Message::MenuPressed => Task::none(),
             Message::SearchFieldInput(input) => {
                 self.moving_app = None;
                 self.update_search_field(input)
@@ -307,7 +343,7 @@ impl Application for Applet {
                     self.pending_confirmation = None;
                     let mut tasks = vec![action.perform()];
                     if let Some(p) = self.popup.take() {
-                        tasks.push(destroy_popup(p));
+                        tasks.push(self.destroy_surface(p));
                     }
                     Task::batch(tasks)
                 }
@@ -494,6 +530,9 @@ impl Application for Applet {
             desktop_files().map(Message::FileEvent),
             listen_raw(|event, _, _| {
                 return match event {
+                    cosmic::iced::Event::PlatformSpecific(PlatformSpecific::Wayland(
+                        wayland::Event::Layer(wayland::LayerEvent::Unfocused, _, id),
+                    )) => Some(Message::SurfaceUnfocused(id)),
                     cosmic::iced::Event::Keyboard(keyboard::Event::KeyPressed {
                         key: keyboard::Key::Named(key),
                         ..
@@ -605,7 +644,26 @@ impl Applet {
         }
     }
 
+    /// Closes the open popup or layer surface.
+    fn destroy_surface(&self, id: Id) -> Task<Message> {
+        if self.menu_is_layer_surface {
+            destroy_layer_surface(id)
+        } else {
+            destroy_popup(id)
+        }
+    }
+
     fn toggle_popup(&mut self, popup_type: PopupType) -> Task<Message> {
+        // Clicking the panel button takes the keyboard from the open layer
+        // surface menu, closing it just before the click would reopen it.
+        if self.popup.is_none()
+            && popup_type == PopupType::MainMenu
+            && self
+                .menu_unfocused_at
+                .is_some_and(|at| at.elapsed() < std::time::Duration::from_millis(300))
+        {
+            return Task::none();
+        }
         // reset popup state
         self.search_field.clear();
         let available = crate::logic::apps::load_app_categories(&self.config);
@@ -634,11 +692,29 @@ impl Applet {
         }
 
         if let Some(p) = self.popup.take() {
-            tasks.push(destroy_popup(p));
+            tasks.push(self.destroy_surface(p));
             Task::batch(tasks)
         } else {
             let new_id = Id::unique();
             self.popup.replace(new_id);
+            // A layer surface gets the keyboard as soon as it is mapped, so
+            // the search field takes typing right away, see `menu_surface`.
+            self.menu_is_layer_surface = self.popup_type == PopupType::MainMenu
+                && self.config.focused_menu
+                && crate::menu_surface::hosted_by_panel();
+            if self.menu_is_layer_surface {
+                self.menu_placement = crate::menu_surface::placement(
+                    self.core.applet.anchor,
+                    Self::APP_ID,
+                    self.panel_thickness(),
+                );
+                tasks.push(get_layer_surface(crate::menu_surface::settings(
+                    new_id,
+                    Self::APP_ID.to_owned(),
+                    &self.menu_placement,
+                )));
+                return Task::batch(tasks);
+            }
             let mut popup_settings = self.core.applet.get_popup_settings(
                 self.core.main_window_id().unwrap(),
                 new_id,
@@ -722,6 +798,17 @@ impl Applet {
         };
         let trees = crate::applet_menu::AppletMenu::build_app_context_menu(app, app_index, state);
         self.context_menus.insert(app.id.clone(), trees);
+    }
+
+    /// Thickness of the panel, without its gap to the screen's edge.
+    fn panel_thickness(&self) -> i32 {
+        let (width, height) = self.core.applet.suggested_size(true);
+        let (_, padding) = self.core.applet.suggested_padding(true);
+        let thickness = match self.core.applet.anchor {
+            PanelAnchor::Top | PanelAnchor::Bottom => height,
+            PanelAnchor::Left | PanelAnchor::Right => width,
+        };
+        i32::from(thickness) + 2 * i32::from(padding)
     }
 
     fn close_popup(&mut self, id: Id) -> Task<Message> {
@@ -809,7 +896,7 @@ impl Applet {
         }
 
         if let Some(p) = self.popup.take() {
-            return destroy_popup(p);
+            return self.destroy_surface(p);
         }
 
         Task::none()
@@ -872,7 +959,7 @@ impl Applet {
         self.update_recent_applications(app);
 
         if let Some(p) = self.popup.take() {
-            return destroy_popup(p);
+            return self.destroy_surface(p);
         }
         Task::none()
     }
@@ -923,7 +1010,7 @@ impl Applet {
     fn launch_tool(&mut self, tool: SystemTool) -> Task<Message> {
         tool.perform();
         if let Some(p) = self.popup.take() {
-            return destroy_popup(p);
+            return self.destroy_surface(p);
         }
         Task::none()
     }

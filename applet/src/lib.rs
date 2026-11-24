@@ -10,3 +10,4 @@ pub mod applet_button;
 pub mod applet_menu;
 pub mod model;
 pub mod widgets;
+pub mod menu_surface;

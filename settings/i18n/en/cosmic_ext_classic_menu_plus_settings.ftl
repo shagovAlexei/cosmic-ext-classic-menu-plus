@@ -83,3 +83,5 @@ default-menu = Default menu
 default-category = Default category
 default-category-description = The category the menu opens on
 default-category-auto = Automatic (Favorites, if any)
+focused-menu = Type to search right away
+focused-menu-description = The menu takes the keyboard as soon as it opens, also from the keyboard shortcut. It then opens in a corner of the screen next to the panel rather than right at the button.
