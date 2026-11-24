@@ -71,4 +71,4 @@ The applet also reads and writes **`cosmic_app_list_config::AppListConfig`** (th
 ## Known issues (from README)
 
 - The per-app context menu is misaligned when the list is scrolled.
-- The popup is not focused when opened, so search and arrow keys may not work until it's clicked.
+- The popup is not focused when opened, so search and arrow keys may not work until it's clicked. Worked around by `focused_menu` (default on): the main menu opens as a full-screen layer surface (`menu_surface.rs`, taken from upstream), which the compositor gives the keyboard on map. It must not use `popup_container` (its `Autosize` shrinks the surface).

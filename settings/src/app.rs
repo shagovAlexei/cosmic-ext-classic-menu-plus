@@ -102,6 +102,7 @@ pub enum Message {
     AppCategoryReset(String),
     LayoutChanged(MenuLayout),
     SidebarHiddenToggled(bool),
+    FocusedMenuToggled(bool),
     PowerActionsToggled(bool),
     /// Category key, or empty for automatic.
     DefaultCategoryChanged(String),
@@ -699,6 +700,11 @@ impl cosmic::Application for AppModel {
                 self.write_config("sidebar hidden by default");
                 Task::none()
             }
+            Message::FocusedMenuToggled(focused) => {
+                self.config.focused_menu = focused;
+                self.write_config("focused menu");
+                Task::none()
+            }
             Message::PowerActionsToggled(show) => {
                 self.config.show_power_actions = show;
                 self.write_config("show power actions");
@@ -1012,6 +1018,11 @@ impl AppModel {
                 cosmic::widget::settings::item::builder(fl!("hide-sidebar"))
                     .description(fl!("hide-sidebar-description"))
                     .toggler(self.config.sidebar_hidden_by_default, Message::SidebarHiddenToggled),
+            )
+            .add(
+                cosmic::widget::settings::item::builder(fl!("focused-menu"))
+                    .description(fl!("focused-menu-description"))
+                    .toggler(self.config.focused_menu, Message::FocusedMenuToggled),
             )
     }
 

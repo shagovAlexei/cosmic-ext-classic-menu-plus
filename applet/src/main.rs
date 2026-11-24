@@ -14,6 +14,7 @@ mod applet_menu;
 mod model;
 mod dbus;
 mod widgets;
+mod menu_surface;
 
 fn main() -> cosmic::iced::Result {
     // Initialize logging

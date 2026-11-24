@@ -45,6 +45,9 @@ pub struct AppletConfig {
     /// Open the menu with the categories pane collapsed.
     pub sidebar_hidden_by_default: bool,
     pub show_power_actions: bool,
+    /// Open the main menu as a layer surface, which gets the keyboard at
+    /// once, so typing goes to the search field; see `menu_surface`.
+    pub focused_menu: bool,
     /// Category key selected when the menu opens; empty means Favorites when
     /// there are any, otherwise All applications.
     pub default_category: String,
@@ -79,6 +82,7 @@ impl Default for AppletConfig {
             layout: MenuLayout::default(),
             sidebar_hidden_by_default: false,
             show_power_actions: true,
+            focused_menu: true,
             default_category: String::new(),
         }
     }
