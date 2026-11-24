@@ -87,6 +87,11 @@
     <category>System</category>
   </categories>
   <releases>
+    <release version="0.1.7" date="2026-11-24">
+      <description>
+        <p>Fixed the applet crashing, and the menu jumping in size right after it opens, on a display with fractional scaling such as 125%.</p>
+      </description>
+    </release>
     <release version="0.1.6" date="2026-11-24">
       <description>
         <p>Type to search as soon as the menu opens, also when it is opened with the keyboard shortcut. The menu then opens in the corner next to the panel; this can be turned off in the settings.</p>

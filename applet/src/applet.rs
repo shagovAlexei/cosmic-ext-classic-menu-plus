@@ -66,6 +66,13 @@ pub struct Applet {
     pub menu_placement: crate::menu_surface::Placement,
     /// When the menu last closed because it lost the keyboard.
     pub menu_unfocused_at: Option<std::time::Instant>,
+    /// Whether the open menu got its first configure. Until then the app
+    /// list sends no scroll messages: a widget message during a redraw before
+    /// the configure panics tiny_skia at fractional scale (libcosmic#1491).
+    pub menu_opened: bool,
+    /// Whether the menu's layer surface has its real scale, see
+    /// `Message::MenuScale`. Until then it is drawn empty.
+    pub menu_scale_ready: bool,
     /// The selected category that is used to filter the applications.
     pub selected_category: Option<ApplicationCategory>,
     /// Currently logged user
@@ -104,6 +111,12 @@ pub enum Message {
     PopupClosed(Id),
     /// A layer surface lost the keyboard.
     SurfaceUnfocused(Id),
+    /// A surface got its first configure.
+    SurfaceOpened(Id),
+    /// Scale of the menu's layer surface, polled the given number of times.
+    MenuScale(Id, u8, f32),
+    /// Scale of the applet's own window on the panel.
+    PanelScale(f32),
     /// Click outside the menu on its layer surface.
     CloseMenu,
     /// Click on the menu itself, which must not close it.
@@ -182,6 +195,8 @@ impl Application for Applet {
             menu_is_layer_surface: false,
             menu_placement: Default::default(),
             menu_unfocused_at: None,
+            menu_opened: false,
+            menu_scale_ready: true,
             selected_category: Some(ApplicationCategory::ALL),
             config,
             current_user: None,
@@ -290,7 +305,12 @@ impl Application for Applet {
     fn view_window(&self, _id: Id) -> Element<'_, Message> {
         match self.popup_type {
             PopupType::MainMenu if self.menu_is_layer_surface => {
-                crate::menu_surface::view(self.view_main_menu(), self.menu_placement)
+                let menu = if self.menu_scale_ready {
+                    self.view_main_menu()
+                } else {
+                    cosmic::widget::Space::new().into()
+                };
+                crate::menu_surface::view(menu, self.menu_placement)
             }
             PopupType::MainMenu => self.view_main_menu(),
             PopupType::ContextMenu => self.view_context_menu(),
@@ -307,7 +327,7 @@ impl Application for Applet {
             Message::SurfaceUnfocused(id) => {
                 if self.menu_is_layer_surface && self.popup == Some(id) {
                     self.menu_unfocused_at = Some(std::time::Instant::now());
-                    self.close_popup(id);
+                    let _ = self.close_popup(id);
                     return destroy_layer_surface(id);
                 }
                 Task::none()
@@ -317,6 +337,35 @@ impl Application for Applet {
                 None => Task::none(),
             },
             Message::MenuPressed => Task::none(),
+            Message::SurfaceOpened(id) => {
+                if self.popup == Some(id) {
+                    self.menu_opened = true;
+                    if self.menu_is_layer_surface {
+                        return Self::poll_menu_scale(id, 0);
+                    }
+                }
+                Task::none()
+            }
+            // The fractional scale reaches the layer surface only after it is
+            // mapped, and iced applies it on the next redraw. The menu is drawn
+            // empty until the scale is there; this message is that redraw.
+            Message::MenuScale(id, polls, scale) => {
+                if self.popup != Some(id) || self.menu_scale_ready {
+                    return Task::none();
+                }
+                if scale != 1.0 || polls >= 60 {
+                    self.menu_scale_ready = true;
+                    return Task::none();
+                }
+                Self::poll_menu_scale(id, polls + 1)
+            }
+            // At scale 1 the surface needs no other scale to look right.
+            Message::PanelScale(scale) => {
+                if scale == 1.0 {
+                    self.menu_scale_ready = true;
+                }
+                Task::none()
+            }
             Message::SearchFieldInput(input) => {
                 self.moving_app = None;
                 self.update_search_field(input)
@@ -528,8 +577,11 @@ impl Application for Applet {
     fn subscription(&self) -> Subscription<Self::Message> {
         Subscription::batch(vec![
             desktop_files().map(Message::FileEvent),
-            listen_raw(|event, _, _| {
+            listen_raw(|event, _, id| {
                 return match event {
+                    cosmic::iced::Event::Window(cosmic::iced::window::Event::Opened { .. }) => {
+                        Some(Message::SurfaceOpened(id))
+                    }
                     cosmic::iced::Event::PlatformSpecific(PlatformSpecific::Wayland(
                         wayland::Event::Layer(wayland::LayerEvent::Unfocused, _, id),
                     )) => Some(Message::SurfaceUnfocused(id)),
@@ -697,12 +749,22 @@ impl Applet {
         } else {
             let new_id = Id::unique();
             self.popup.replace(new_id);
+            self.menu_opened = false;
             // A layer surface gets the keyboard as soon as it is mapped, so
             // the search field takes typing right away, see `menu_surface`.
             self.menu_is_layer_surface = self.popup_type == PopupType::MainMenu
                 && self.config.focused_menu
                 && crate::menu_surface::hosted_by_panel();
             if self.menu_is_layer_surface {
+                // Drawn empty until the surface has the panel's scale, so it
+                // does not show at scale 1 first and then jump.
+                self.menu_scale_ready = false;
+                if let Some(main) = self.core.main_window_id() {
+                    tasks.push(
+                        cosmic::iced::window::scale_factor(main)
+                            .map(|scale| cosmic::action::app(Message::PanelScale(scale))),
+                    );
+                }
                 self.menu_placement = crate::menu_surface::placement(
                     self.core.applet.anchor,
                     Self::APP_ID,
@@ -798,6 +860,14 @@ impl Applet {
         };
         let trees = crate::applet_menu::AppletMenu::build_app_context_menu(app, app_index, state);
         self.context_menus.insert(app.id.clone(), trees);
+    }
+
+    /// Reads the scale of the menu's surface after a frame, see
+    /// `Message::MenuScale`.
+    fn poll_menu_scale(id: Id, polls: u8) -> Task<Message> {
+        cosmic::iced::Task::future(tokio::time::sleep(std::time::Duration::from_millis(16)))
+            .then(move |()| cosmic::iced::window::scale_factor(id))
+            .map(move |scale| cosmic::action::app(Message::MenuScale(id, polls, scale)))
     }
 
     /// Thickness of the panel, without its gap to the screen's edge.

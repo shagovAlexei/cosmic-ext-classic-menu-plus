@@ -90,12 +90,13 @@ impl VirtualizedAppList {
             |list, item| list.add(item),
         );
 
-        scrollable(container(app_list))
-            .height(Length::Fill)
-            .width(Length::FillPortion(5))
-            .id(applet.scrollable_id.clone())
-            .on_scroll(|viewport| Message::ScrollUpdated(viewport))
-            .into()
+        scroll_messages(
+            scrollable(container(app_list))
+                .height(Length::Fill)
+                .width(Length::FillPortion(5))
+                .id(applet.scrollable_id.clone()),
+            applet,
+        )
     }
 
     /// Grid of icon cells, virtualized by row like the list.
@@ -139,12 +140,13 @@ impl VirtualizedAppList {
             rows.push(spacer(total_rows - render_end));
         }
 
-        scrollable(container(cosmic::widget::column::with_children(rows)).padding([0, space_s]))
-            .height(Length::Fill)
-            .width(Length::FillPortion(5))
-            .id(applet.scrollable_id.clone())
-            .on_scroll(|viewport| Message::ScrollUpdated(viewport))
-            .into()
+        scroll_messages(
+            scrollable(container(cosmic::widget::column::with_children(rows)).padding([0, space_s]))
+                .height(Length::Fill)
+                .width(Length::FillPortion(5))
+                .id(applet.scrollable_id.clone()),
+            applet,
+        )
     }
 
     /// An app cell of the grid: icon above a one-line name.
@@ -294,5 +296,18 @@ impl VirtualizedAppList {
     ) -> Option<Vec<cosmic::widget::menu::Tree<Message>>> {
         // Use cached menu trees if available (built in Applet when apps are updated)
         applet.context_menus.get(&app.id).cloned()
+    }
+}
+
+/// `on_scroll` only once the menu got its first configure, see
+/// `Applet::menu_opened`.
+fn scroll_messages<'a>(
+    list: cosmic::iced::widget::Scrollable<'a, Message, cosmic::Theme, cosmic::Renderer>,
+    applet: &Applet,
+) -> Element<'a, Message> {
+    if applet.menu_opened {
+        list.on_scroll(Message::ScrollUpdated).into()
+    } else {
+        list.into()
     }
 }

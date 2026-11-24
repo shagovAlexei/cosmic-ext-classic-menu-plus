@@ -1,5 +1,5 @@
 Name:           cosmic-ext-classic-menu-plus
-Version:        0.1.6
+Version:        0.1.7
 Release:        1%{?dist}
 Summary:        Classic Menu Plus Applet
 
@@ -38,6 +38,10 @@ just rootdir=%{buildroot} install
 %{_datadir}/cosmic/io.github.shagovAlexei.cosmic-ext-classic-menu-plus/applet-buttons/*
 
 %changelog
+* Tue Nov 24 2026 Shagov Alexei <shagov.alexei@gmail.com> 0.1.7-1
+- Fixed the applet crashing when the menu opens on a display with fractional scaling
+- Fixed the menu jumping in size right after it opens on such a display
+
 * Tue Nov 24 2026 Shagov Alexei <shagov.alexei@gmail.com> 0.1.6-1
 - Type to search as soon as the menu opens, also from the keyboard shortcut
 
