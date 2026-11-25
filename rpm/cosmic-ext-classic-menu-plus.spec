@@ -1,5 +1,5 @@
 Name:           cosmic-ext-classic-menu-plus
-Version:        0.1.7
+Version:        0.2.0
 Release:        1%{?dist}
 Summary:        Classic Menu Plus Applet
 
@@ -38,6 +38,11 @@ just rootdir=%{buildroot} install
 %{_datadir}/cosmic/io.github.shagovAlexei.cosmic-ext-classic-menu-plus/applet-buttons/*
 
 %changelog
+* Wed Nov 25 2026 Shagov Alexei <shagov.alexei@gmail.com> 0.2.0-1
+- Menu styles: Classic, Compact and Sidebar, picked from cards in the settings
+- Grid, list and hybrid layouts are picked from cards too
+- The menu sits flush against the screen edge and the panel
+
 * Tue Nov 24 2026 Shagov Alexei <shagov.alexei@gmail.com> 0.1.7-1
 - Fixed the applet crashing when the menu opens on a display with fractional scaling
 - Fixed the menu jumping in size right after it opens on such a display

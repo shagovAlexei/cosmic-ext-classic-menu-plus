@@ -87,6 +87,11 @@
     <category>System</category>
   </categories>
   <releases>
+    <release version="0.2.0" date="2026-11-25">
+      <description>
+        <p>Three menu styles: Classic, Compact with the user and search in one row and the power buttons in a footer, and Sidebar with a strip of favorites and power buttons on the left. Styles and the grid, list and hybrid layouts are picked from cards with a small sketch. The menu sits flush against the screen edge and the panel.</p>
+      </description>
+    </release>
     <release version="0.1.7" date="2026-11-24">
       <description>
         <p>Fixed the applet crashing, and the menu jumping in size right after it opens, on a display with fractional scaling such as 125%.</p>

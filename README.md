@@ -6,6 +6,7 @@ Classic Menu Plus is an application menu for the COSMIC™ desktop. It shows you
 
 ## Features
 
+- Three menu styles: Classic, Compact (user and search in one row, power buttons in a footer) and Sidebar (a strip of favorites and power buttons on the left)
 - Grid, list and hybrid layouts. Hybrid shows Favorites and Recently used as a grid and the other categories as a list.
 - Favorites: add apps from their right-click menu and reorder them in the settings
 - Categories: the standard freedesktop categories and your own, each with a name and icon. Rename, reorder or hide any category, move apps between categories or hide them from the menu.
@@ -49,7 +50,11 @@ Classic Menu Plus is an application menu for the COSMIC™ desktop. It shows you
 
 ### Appearance
 
-- **Layout:** grid, list or hybrid. See [Layouts](#layouts).
+- **Menu style**, picked from cards with a small sketch of each:
+  - **Classic:** user on top, then search, the app list and the categories with the power buttons under them.
+  - **Compact:** user picture, search and the settings buttons in one header row, power buttons in a footer.
+  - **Sidebar:** a strip on the left with your favorites, the settings button and the power buttons, next to the categories and the app list.
+- **Layout:** grid, list or hybrid, also picked from cards. See [Layouts](#layouts).
 - **Menu width**, **Menu height**, **App icon size** and **List density.**
 
 ### Sidebar

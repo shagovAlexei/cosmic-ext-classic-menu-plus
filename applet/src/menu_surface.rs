@@ -122,8 +122,8 @@ pub fn view(
     use cosmic::widget::{container, mouse_area};
 
     mouse_area(
+        // No gap to the screen's edge or the panel, as the popup had none.
         container(mouse_area(menu).on_press(crate::applet::Message::MenuPressed))
-            .padding(4)
             .width(Length::Fill)
             .height(Length::Fill)
             .align_x(placement.align_x)

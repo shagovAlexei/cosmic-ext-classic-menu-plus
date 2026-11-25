@@ -70,7 +70,16 @@ reset-category = Сбросить
 
 monochrome-icon = Монохромная иконка
 layout = Вид
-layout-description = Гибрид показывает Избранное и Недавние сеткой, остальные категории — списком
+layout-grid-description = Сетка значков
+layout-list-description = Названия и описания
+layout-hybrid-description = Сетка для Избранного и Недавних
+menu-style = Стиль меню
+style-classic = Классический
+style-classic-description = Пользователь сверху, питание под категориями
+style-compact = Компактный
+style-compact-description = Пользователь и поиск в одной строке
+style-sidebar = Боковая панель
+style-sidebar-description = Полоса избранного слева
 layout-grid = Сетка
 layout-list = Список
 layout-hybrid = Гибрид

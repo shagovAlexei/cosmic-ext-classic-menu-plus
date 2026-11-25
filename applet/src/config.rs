@@ -42,6 +42,8 @@ pub struct AppletConfig {
     /// permanent categories; custom ones keep their name in `custom_categories`).
     pub category_names: BTreeMap<String, String>,
     pub layout: MenuLayout,
+    /// Where the menu's parts go, see [`MenuStyle`].
+    pub menu_style: MenuStyle,
     /// Open the menu with the categories pane collapsed.
     pub sidebar_hidden_by_default: bool,
     pub show_power_actions: bool,
@@ -80,6 +82,7 @@ impl Default for AppletConfig {
             category_order: vec![],
             category_names: BTreeMap::new(),
             layout: MenuLayout::default(),
+            menu_style: MenuStyle::default(),
             sidebar_hidden_by_default: false,
             show_power_actions: true,
             focused_menu: true,
@@ -153,6 +156,22 @@ pub enum MenuLayout {
     #[default]
     List,
     Hybrid,
+}
+
+/// Arrangement of the menu: Classic has the user on top and the power
+/// buttons under the categories; Compact puts the user and search in one
+/// header row and the power buttons in a footer; Sidebar adds a strip of
+/// favorites and power buttons beside the categories.
+#[derive(Debug, Clone, Copy, Default, Eq, PartialEq, Serialize, Deserialize)]
+pub enum MenuStyle {
+    #[default]
+    Classic,
+    Compact,
+    Sidebar,
+}
+
+impl MenuStyle {
+    pub const ALL: [MenuStyle; 3] = [MenuStyle::Classic, MenuStyle::Compact, MenuStyle::Sidebar];
 }
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Serialize, Deserialize)]

@@ -87,6 +87,8 @@ pub struct Applet {
     pub context_menus: std::collections::HashMap<String, Vec<cosmic::widget::menu::Tree<Message>>>,
     /// Categories offered in the per-app "Move to..." panel.
     pub move_targets: Vec<ApplicationCategory>,
+    /// Favorite apps in the strip of the Sidebar menu style.
+    pub sidebar_favorites: Vec<Arc<ApplicationEntry>>,
     /// Index of the app whose "Move to..." category panel is shown in place
     /// of the categories pane.
     pub moving_app: Option<usize>,
@@ -208,6 +210,7 @@ impl Application for Applet {
             popup: None,
             context_menus: std::collections::HashMap::new(),
             move_targets,
+            sidebar_favorites: Vec::new(),
             moving_app: None,
             scroll_offset: 0.0,
             scroll_viewport_height: 0.0,
@@ -422,10 +425,14 @@ impl Application for Applet {
                     || self.config.hidden_categories != config.hidden_categories
                     || self.config.category_order != config.category_order
                     || self.config.category_names != config.category_names;
+                let style_changed = self.config.menu_style != config.menu_style;
                 self.config = config;
 
                 if pinned_changed || categories_changed {
                     self.rebuild_context_menus();
+                }
+                if style_changed {
+                    self.update_sidebar_favorites();
                 }
 
                 if (pinned_changed || categories_changed) && self.popup.is_some() {
@@ -727,6 +734,7 @@ impl Applet {
             crate::logic::apps::get_apps_of_category(category.clone(), &self.config);
         // the cached menus are for the previous list; a missing one panics libcosmic
         self.rebuild_context_menus();
+        self.update_sidebar_favorites();
         self.selected_item_index = None;
         self.pending_confirmation = None;
         self.moving_app = None;
@@ -802,6 +810,7 @@ impl Applet {
     /// after anything affecting category resolution changed: `pinned_apps`,
     /// custom categories, overrides, hidden apps/categories or their order.
     fn refresh_menu_view(&mut self) -> Task<Message> {
+        self.update_sidebar_favorites();
         let available = crate::logic::apps::load_app_categories(&self.config);
         self.selected_category = crate::logic::categories::category_after_change(
             self.selected_category.take(),
@@ -860,6 +869,15 @@ impl Applet {
         };
         let trees = crate::applet_menu::AppletMenu::build_app_context_menu(app, app_index, state);
         self.context_menus.insert(app.id.clone(), trees);
+    }
+
+    /// Only the Sidebar style shows them, so they are not loaded otherwise.
+    fn update_sidebar_favorites(&mut self) {
+        self.sidebar_favorites = if self.config.menu_style == crate::config::MenuStyle::Sidebar {
+            crate::logic::apps::get_apps_of_category(ApplicationCategory::FAVORITES, &self.config)
+        } else {
+            Vec::new()
+        };
     }
 
     /// Reads the scale of the menu's surface after a frame, see
