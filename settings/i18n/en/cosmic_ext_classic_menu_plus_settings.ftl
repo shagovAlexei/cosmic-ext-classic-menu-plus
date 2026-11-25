@@ -69,7 +69,16 @@ reset-category = Reset
 
 monochrome-icon = Monochrome icon
 layout = Layout
-layout-description = Hybrid uses the grid for Favorites and Recently used, and the list for other categories
+layout-grid-description = Icon grid
+layout-list-description = Names and descriptions
+layout-hybrid-description = Grid for Favorites and Recent
+menu-style = Menu style
+style-classic = Classic
+style-classic-description = User on top, power under categories
+style-compact = Compact
+style-compact-description = User and search in one row
+style-sidebar = Sidebar
+style-sidebar-description = Favorites strip on the left
 layout-grid = Grid
 layout-list = List
 layout-hybrid = Hybrid

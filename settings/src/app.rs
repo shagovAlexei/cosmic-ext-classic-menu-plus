@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: {{ license }}
 
 mod categories;
+mod style_picker;
 mod panel_icon;
 
 use crate::fl;
@@ -16,7 +17,7 @@ use cosmic::widget::{
 };
 use cosmic::{Element, widget::text};
 use cosmic_ext_classic_menu_plus_applet::config::{
-    AppletButtonStyle, AppletConfig, HorizontalPosition, MenuLayout, UserWidgetStyle,
+    AppletButtonStyle, AppletConfig, HorizontalPosition, MenuLayout, MenuStyle, UserWidgetStyle,
     VerticalPosition,
 };
 use cosmic_ext_classic_menu_plus_applet::model::appearance::{self, ListDensity};
@@ -101,6 +102,7 @@ pub enum Message {
     AppUnhidden(String),
     AppCategoryReset(String),
     LayoutChanged(MenuLayout),
+    MenuStyleChanged(MenuStyle),
     SidebarHiddenToggled(bool),
     FocusedMenuToggled(bool),
     PowerActionsToggled(bool),
@@ -352,6 +354,10 @@ impl cosmic::Application for AppModel {
 
         let page: Element<'_, Message> = match self.nav.active_data::<Page>() {
             Some(Page::Appearance) => cosmic::widget::column::with_children(vec![
+                cosmic::widget::settings::section()
+                    .title(fl!("menu-style"))
+                    .add(style_picker::menu_style_picker(self.config.menu_style))
+                    .into(),
                 self.appearance_section().into(),
                 self.sidebar_section().into(),
                 self.default_menu_section().into(),
@@ -585,6 +591,7 @@ impl cosmic::Application for AppModel {
                 self.config.app_icon_size = appearance::DEFAULT_ICON_SIZE;
                 self.config.list_density = ListDensity::default();
                 self.config.layout = MenuLayout::default();
+                self.config.menu_style = MenuStyle::default();
                 self.write_config("appearance defaults");
                 Task::none()
             }
@@ -690,6 +697,11 @@ impl cosmic::Application for AppModel {
 
                 Task::none()
             }
+            Message::MenuStyleChanged(style) => {
+                self.config.menu_style = style;
+                self.write_config("menu style");
+                Task::none()
+            }
             Message::LayoutChanged(layout) => {
                 self.config.layout = layout;
                 self.write_config("layout");
@@ -785,28 +797,9 @@ impl AppModel {
             ListDensity::Normal => 1,
         };
 
-        let layout_radio = |label: String, layout: MenuLayout| {
-            cosmic::widget::Radio::new(
-                text::body(label),
-                layout,
-                Some(self.config.layout),
-                Message::LayoutChanged,
-            )
-        };
-        let layout = cosmic::iced::widget::row![
-            layout_radio(fl!("layout-grid"), MenuLayout::Grid),
-            layout_radio(fl!("layout-list"), MenuLayout::List),
-            layout_radio(fl!("layout-hybrid"), MenuLayout::Hybrid),
-        ]
-        .spacing(cosmic::theme::active().cosmic().space_m());
-
         cosmic::widget::settings::section()
             .title(fl!("appearance"))
-            .add(
-                cosmic::widget::settings::item::builder(fl!("layout"))
-                    .description(fl!("layout-description"))
-                    .control(layout),
-            )
+            .add(style_picker::layout_picker(self.config.layout))
             .add(cosmic::widget::settings::item(
                 fl!("popup-width"),
                 cosmic::widget::spin_button(

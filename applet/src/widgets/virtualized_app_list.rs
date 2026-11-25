@@ -260,7 +260,7 @@ impl VirtualizedAppList {
     ///
     /// # Returns
     /// A container element with the app icon
-    fn create_icon_widget(app: &Arc<ApplicationEntry>, icon_size: u16) -> Element<'_, Message> {
+    pub(crate) fn create_icon_widget(app: &Arc<ApplicationEntry>, icon_size: u16) -> Element<'_, Message> {
         let default_icon = crate::model::application_entry::IconHandle::default();
         let icon_handle = app.icon.as_ref().unwrap_or(&default_icon);
 

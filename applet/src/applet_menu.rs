@@ -11,7 +11,7 @@ use cosmic::widget::{container, menu};
 use cosmic::{Element, theme};
 
 use crate::applet::{Applet, Message};
-use crate::config::{HorizontalPosition, VerticalPosition};
+use crate::config::{HorizontalPosition, MenuStyle, VerticalPosition};
 use crate::fl;
 use crate::model::appearance;
 use crate::model::application_category::{ApplicationCategory, CategoryIcon};
@@ -87,46 +87,12 @@ impl AppletMenu {
     const ABOUT_SYMBOLIC: &[u8] = include_bytes!("../../res/icons/bundled/help-about-symbolic.svg");
 
     pub fn view_main_menu_list(applet: &Applet) -> Element<'_, Message> {
-        let Spacing {
-            space_xxs, space_s, ..
-        } = theme::active().cosmic().spacing;
-
-        let current_user = AppletMenu::create_logged_user_widget(applet);
-        let search_field = AppletMenu::create_search_field(applet);
-        let app_list = AppletMenu::create_app_list(applet);
-        let categories_pane = AppletMenu::create_categories_pane(applet);
-        let vertical_spacer =
-            cosmic::applet::padded_control(cosmic::widget::divider::vertical::default())
-                .align_x(Alignment::Center)
-                .align_y(Alignment::Center)
-                .width(Length::Shrink)
-                .padding(5);
-
-        let dual_pane: Element<Message> = if !applet.sidebar_visible {
-            // power buttons normally sit at the bottom of the sidebar
-            column![app_list, AppletMenu::create_power_menu(applet)]
-                .padding([space_xxs, 0])
-                .into()
-        } else {
-            match applet.config.app_menu_position {
-                HorizontalPosition::Left => {
-                    row![app_list, vertical_spacer, categories_pane].padding([space_xxs, 0])
-                }
-                HorizontalPosition::Right => {
-                    row![categories_pane, vertical_spacer, app_list].padding([space_xxs, 0])
-                }
-            }
-            .into()
+        let menu_layout = match applet.config.menu_style {
+            MenuStyle::Classic => AppletMenu::view_classic(applet),
+            MenuStyle::Compact => AppletMenu::view_compact(applet),
+            MenuStyle::Sidebar => AppletMenu::view_sidebar(applet),
         };
-        let menu_layout = match applet.config.search_field_position {
-            VerticalPosition::Top => {
-                column![current_user, search_field, dual_pane].padding([space_xxs, space_s])
-            }
-            VerticalPosition::Bottom => {
-                column![current_user, dual_pane, search_field].padding([space_xxs, space_s])
-            }
-        };
-        let menu_layout = menu_layout
+        let menu_layout = container(menu_layout)
             .width(Length::Fixed(
                 appearance::clamp_popup_width(applet.config.popup_width) as f32,
             ))
@@ -154,6 +120,157 @@ impl AppletMenu {
                     .min_width(AppletMenu::POPUP_MIN_WIDTH),
             )
             .into()
+    }
+
+    /// User on top, then the search field, the app list and the categories
+    /// with the power buttons under them.
+    fn view_classic(applet: &Applet) -> Element<'_, Message> {
+        let Spacing {
+            space_xxs, space_s, ..
+        } = theme::active().cosmic().spacing;
+
+        let current_user = AppletMenu::create_logged_user_widget(applet);
+        let search_field = AppletMenu::create_search_field(applet);
+        let panes = AppletMenu::create_panes(applet, true);
+        match applet.config.search_field_position {
+            VerticalPosition::Top => column![current_user, search_field, panes],
+            VerticalPosition::Bottom => column![current_user, panes, search_field],
+        }
+        .padding([space_xxs, space_s])
+        .into()
+    }
+
+    /// User picture, search field and tool buttons in one header row, the
+    /// power buttons in a footer.
+    fn view_compact(applet: &Applet) -> Element<'_, Message> {
+        let Spacing {
+            space_xxs, space_xs, space_s, ..
+        } = theme::active().cosmic().spacing;
+
+        let mut header = cosmic::widget::row::with_capacity(4)
+            .spacing(space_xs)
+            .align_y(Alignment::Center)
+            .padding([space_xs, 0]);
+        if let Some(picture) = AppletMenu::create_user_picture_button(applet, 32) {
+            header = header.push(picture);
+        }
+        header = header
+            .push(AppletMenu::create_search_field(applet))
+            .push(AppletMenu::create_about_button())
+            .push(AppletMenu::create_settings_button());
+
+        let footer: Element<Message> = if applet.pending_confirmation.is_some() {
+            AppletMenu::create_power_menu(applet)
+        } else if let Some(buttons) = AppletMenu::create_power_buttons(applet, false) {
+            container(buttons)
+                .width(Length::Fill)
+                .align_x(Alignment::End)
+                .padding([space_xxs, 0])
+                .into()
+        } else {
+            cosmic::widget::Space::new().width(0).height(0).into()
+        };
+
+        column![header, AppletMenu::create_panes(applet, false), footer]
+            .padding([space_xxs, space_s])
+            .into()
+    }
+
+    /// A strip of favorites, tool and power buttons beside the categories
+    /// and the app list, with the search field over them.
+    fn view_sidebar(applet: &Applet) -> Element<'_, Message> {
+        let Spacing {
+            space_xxs, space_xs, space_s, ..
+        } = theme::active().cosmic().spacing;
+
+        let favorites = cosmic::widget::column::with_children(
+            applet
+                .sidebar_favorites
+                .iter()
+                .map(|app| {
+                    cosmic::widget::tooltip(
+                        cosmic::widget::button::custom(
+                            crate::widgets::VirtualizedAppList::create_icon_widget(app, 28),
+                        )
+                        .padding(6)
+                        .class(cosmic::theme::Button::AppletMenu)
+                        .on_press(Message::ApplicationSelected(app.clone())),
+                        text(&app.name),
+                        cosmic::widget::tooltip::Position::Right,
+                    )
+                    .into()
+                })
+                .collect::<Vec<Element<Message>>>(),
+        )
+        .spacing(space_xxs)
+        .align_x(Alignment::Center);
+
+        let mut strip = cosmic::widget::column::with_capacity(5)
+            .spacing(space_xxs)
+            .align_x(Alignment::Center)
+            .padding([space_xs, 0])
+            .height(Length::Fill);
+        if let Some(picture) = AppletMenu::create_user_picture_button(applet, 32) {
+            strip = strip.push(picture);
+        }
+        strip = strip
+            .push(cosmic::widget::scrollable(favorites).height(Length::Fill))
+            .push(AppletMenu::create_settings_button());
+        if let Some(buttons) = AppletMenu::create_power_buttons(applet, true) {
+            strip = strip.push(buttons);
+        }
+
+        let body = row![strip, AppletMenu::vertical_divider(), AppletMenu::create_panes(applet, false)];
+        let search_field = AppletMenu::create_search_field(applet);
+        let mut menu = match applet.config.search_field_position {
+            VerticalPosition::Top => column![search_field, body],
+            VerticalPosition::Bottom => column![body, search_field],
+        }
+        .spacing(space_xxs)
+        .padding([space_xs, space_s]);
+        // The question is too wide for the strip.
+        if applet.pending_confirmation.is_some() {
+            menu = menu.push(AppletMenu::create_power_menu(applet));
+        }
+        menu.into()
+    }
+
+    fn vertical_divider() -> Element<'static, Message> {
+        cosmic::applet::padded_control(cosmic::widget::divider::vertical::default())
+            .align_x(Alignment::Center)
+            .align_y(Alignment::Center)
+            .width(Length::Shrink)
+            .padding(5)
+            .into()
+    }
+
+    /// The app list beside the categories, or alone with the sidebar hidden.
+    /// `with_power` puts the power buttons under the categories, or under the
+    /// list when the sidebar is hidden.
+    fn create_panes(applet: &Applet, with_power: bool) -> Element<'_, Message> {
+        let Spacing { space_xxs, .. } = theme::active().cosmic().spacing;
+
+        let app_list = AppletMenu::create_app_list(applet);
+        if !applet.sidebar_visible {
+            if !with_power {
+                return app_list;
+            }
+            // power buttons normally sit at the bottom of the sidebar
+            return column![app_list, AppletMenu::create_power_menu(applet)]
+                .padding([space_xxs, 0])
+                .into();
+        }
+        let categories_pane = AppletMenu::create_categories_pane(applet, with_power);
+        match applet.config.app_menu_position {
+            HorizontalPosition::Left => {
+                row![app_list, AppletMenu::vertical_divider(), categories_pane]
+            }
+            HorizontalPosition::Right => {
+                row![categories_pane, AppletMenu::vertical_divider(), app_list]
+            }
+        }
+        .padding([space_xxs, 0])
+        .into()
     }
 
     /// Right-click menu of an app entry: launch, pin to panel, favorite,
@@ -277,29 +394,10 @@ impl AppletMenu {
             .align_x(Alignment::Center)
             .into()
         } else {
-            let actions = PowerAction::visible(&applet.config.power_buttons, applet.can_hibernate);
-            if actions.is_empty() || !applet.config.show_power_actions {
-                return cosmic::widget::Space::new().width(0).height(0).into();
+            match AppletMenu::create_power_buttons(applet, false) {
+                Some(buttons) => buttons,
+                None => return cosmic::widget::Space::new().width(0).height(0).into(),
             }
-            cosmic::widget::row::with_children(
-                actions
-                    .into_iter()
-                    .map(|action| {
-                        cosmic::widget::button::icon(
-                            cosmic::widget::icon::from_svg_bytes(AppletMenu::power_action_icon(
-                                action,
-                            ))
-                            .symbolic(true),
-                        )
-                        // fixed padding keeps six icons inside the pane in every density
-                        .padding(8)
-                        .on_press(Message::PowerOptionSelected(action))
-                        .into()
-                    })
-                    .collect::<Vec<Element<Message>>>(),
-            )
-            .align_y(Alignment::Center)
-            .into()
         };
 
         container(content)
@@ -307,6 +405,33 @@ impl AppletMenu {
             .padding([20, 0])
             .align_x(Alignment::Center)
             .into()
+    }
+
+    /// The power buttons in a row, or a column, if any are shown.
+    fn create_power_buttons(applet: &Applet, vertical: bool) -> Option<Element<'_, Message>> {
+        let actions = PowerAction::visible(&applet.config.power_buttons, applet.can_hibernate);
+        if actions.is_empty() || !applet.config.show_power_actions {
+            return None;
+        }
+        let buttons = actions.into_iter().map(|action| {
+            cosmic::widget::button::icon(
+                cosmic::widget::icon::from_svg_bytes(AppletMenu::power_action_icon(action))
+                    .symbolic(true),
+            )
+            // fixed padding keeps six icons inside the pane in every density
+            .padding(8)
+            .on_press(Message::PowerOptionSelected(action))
+            .into()
+        });
+        Some(if vertical {
+            cosmic::widget::column::with_children(buttons.collect::<Vec<Element<Message>>>())
+                .align_x(Alignment::Center)
+                .into()
+        } else {
+            cosmic::widget::row::with_children(buttons.collect::<Vec<Element<Message>>>())
+                .align_y(Alignment::Center)
+                .into()
+        })
     }
 
     fn create_search_field(applet: &Applet) -> Element<'_, Message> {
@@ -373,7 +498,7 @@ impl AppletMenu {
         .into()
     }
 
-    fn create_categories_pane(applet: &Applet) -> Element<'_, Message> {
+    fn create_categories_pane(applet: &Applet, with_power: bool) -> Element<'_, Message> {
         if let Some(app_index) = applet.moving_app {
             return AppletMenu::create_move_to_pane(applet, app_index);
         }
@@ -405,7 +530,9 @@ impl AppletMenu {
             cosmic::applet::padded_control(cosmic::widget::divider::horizontal::default())
                 .align_x(Alignment::Center)
                 .align_y(Alignment::Center)
-                .padding(5)
+                // as wide as the category buttons, so the selected one does
+                // not stick out past it
+                .padding([5, 0])
                 .into();
         let permanent_count = applet
             .available_categories
@@ -414,6 +541,15 @@ impl AppletMenu {
             .count();
         if !categories_pane.is_empty() {
             categories_pane.insert(permanent_count, horizontal_divider);
+        }
+
+        if !with_power {
+            return cosmic::widget::scrollable(cosmic::widget::column::with_children(
+                categories_pane,
+            ))
+            .height(Length::Fill)
+            .width(Length::FillPortion(3))
+            .into();
         }
 
         // add power menu to the bottom of the categories pane
@@ -437,21 +573,7 @@ impl AppletMenu {
         }
 
         if let Some(user) = &applet.current_user {
-            let profile_picture_widget: Element<Message> =
-                if PathBuf::from(&user.profile_picture).exists() {
-                    cosmic::widget::image(&user.profile_picture)
-                        .width(Length::Fixed(40.))
-                        .height(Length::Fixed(40.))
-                        .content_fit(ContentFit::ScaleDown)
-                        .border_radius([5.; 4])
-                        .into()
-                } else {
-                    cosmic::widget::icon::from_svg_bytes(AppletMenu::USER_IDLE_SYMBOLIC)
-                        .symbolic(true)
-                        .icon()
-                        .size(40)
-                        .into()
-                };
+            let profile_picture_widget = AppletMenu::create_user_picture(user, 40);
 
             let nametag_widget: Element<Message> = match &applet.config.user_widget {
                 crate::config::UserWidgetStyle::UsernamePrefered => text(&user.username)
@@ -499,32 +621,11 @@ impl AppletMenu {
             .class(cosmic::theme::Button::Text)
             .on_press(Message::LaunchTool(SystemTool::USER_SETTINGS));
 
-            let settings_button = cosmic::widget::tooltip(
-                cosmic::widget::button::icon(
-                    cosmic::widget::icon::from_svg_bytes(AppletMenu::SETTINGS_SYMBOLIC)
-                        .symbolic(true),
-                )
-                .padding(8)
-                .on_press(Message::LaunchTool(SystemTool::APPLET_SETTINGS)),
-                text(fl!("settings")),
-                cosmic::widget::tooltip::Position::Bottom,
-            );
-
-            let about_button = cosmic::widget::tooltip(
-                cosmic::widget::button::icon(
-                    cosmic::widget::icon::from_svg_bytes(AppletMenu::ABOUT_SYMBOLIC).symbolic(true),
-                )
-                .padding(8)
-                .on_press(Message::LaunchTool(SystemTool::APPLET_ABOUT)),
-                text(fl!("about")),
-                cosmic::widget::tooltip::Position::Bottom,
-            );
-
             row![
                 user_button,
                 cosmic::widget::Space::new().width(Length::Fill),
-                about_button,
-                settings_button
+                AppletMenu::create_about_button(),
+                AppletMenu::create_settings_button()
             ]
             .align_y(Alignment::Center)
             .padding([10., 0.])
@@ -532,6 +633,72 @@ impl AppletMenu {
         } else {
             cosmic::widget::Space::new().width(0).height(0).into()
         }
+    }
+}
+
+
+impl AppletMenu {
+    fn create_user_picture(user: &crate::model::user::User, size: u16) -> Element<'_, Message> {
+        if PathBuf::from(&user.profile_picture).exists() {
+            cosmic::widget::image(&user.profile_picture)
+                .width(Length::Fixed(size.into()))
+                .height(Length::Fixed(size.into()))
+                .content_fit(ContentFit::ScaleDown)
+                .border_radius([5.; 4])
+                .into()
+        } else {
+            cosmic::widget::icon::from_svg_bytes(AppletMenu::USER_IDLE_SYMBOLIC)
+                .symbolic(true)
+                .icon()
+                .size(size)
+                .into()
+        }
+    }
+
+    /// Just the user's picture, opening the account settings, unless the
+    /// user widget is turned off.
+    fn create_user_picture_button(applet: &Applet, size: u16) -> Option<Element<'_, Message>> {
+        if applet.config.user_widget == crate::config::UserWidgetStyle::None {
+            return None;
+        }
+        let user = applet.current_user.as_ref()?;
+        Some(
+            cosmic::widget::tooltip(
+                cosmic::widget::button::custom(AppletMenu::create_user_picture(user, size))
+                    .padding(2)
+                    .class(cosmic::theme::Button::Text)
+                    .on_press(Message::LaunchTool(SystemTool::USER_SETTINGS)),
+                text(&user.username),
+                cosmic::widget::tooltip::Position::Bottom,
+            )
+            .into(),
+        )
+    }
+
+    fn create_settings_button() -> Element<'static, Message> {
+        cosmic::widget::tooltip(
+            cosmic::widget::button::icon(
+                cosmic::widget::icon::from_svg_bytes(AppletMenu::SETTINGS_SYMBOLIC).symbolic(true),
+            )
+            .padding(8)
+            .on_press(Message::LaunchTool(SystemTool::APPLET_SETTINGS)),
+            text(fl!("settings")),
+            cosmic::widget::tooltip::Position::Bottom,
+        )
+        .into()
+    }
+
+    fn create_about_button() -> Element<'static, Message> {
+        cosmic::widget::tooltip(
+            cosmic::widget::button::icon(
+                cosmic::widget::icon::from_svg_bytes(AppletMenu::ABOUT_SYMBOLIC).symbolic(true),
+            )
+            .padding(8)
+            .on_press(Message::LaunchTool(SystemTool::APPLET_ABOUT)),
+            text(fl!("about")),
+            cosmic::widget::tooltip::Position::Bottom,
+        )
+        .into()
     }
 }
 
